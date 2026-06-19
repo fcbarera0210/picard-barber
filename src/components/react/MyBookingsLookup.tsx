@@ -10,6 +10,23 @@ type Booking = {
   serviceId: string;
 };
 
+function TicketCard({
+  children,
+  accent = false,
+}: {
+  children: React.ReactNode;
+  accent?: boolean;
+}) {
+  return (
+    <div
+      className={`ticket-card overflow-hidden rounded-xl ${accent ? 'neon-shadow-cyan' : ''}`}
+    >
+      <div className="ticket-card-top" />
+      <div className="p-5">{children}</div>
+    </div>
+  );
+}
+
 export function MyBookingsLookup() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
@@ -52,9 +69,11 @@ export function MyBookingsLookup() {
   );
 
   return (
-    <div className="mx-auto max-w-lg space-y-6">
-      <form onSubmit={handleSearch} className="card space-y-4">
-        <h2 className="font-display text-2xl">Mis reservas</h2>
+    <div className="mx-auto max-w-2xl space-y-6">
+      <form onSubmit={handleSearch} className="card laser-scanner space-y-4">
+        <h2 className="font-display text-2xl">
+          <span className="text-gradient-cyber">Mis reservas</span>
+        </h2>
         <p className="text-sm text-muted">Ingresa tu email para ver tu historial de citas.</p>
         {error && (
           <p className="rounded-lg border border-danger/30 bg-danger/10 px-3 py-2 text-sm text-danger">
@@ -62,7 +81,7 @@ export function MyBookingsLookup() {
           </p>
         )}
         <div>
-          <label className="mb-1 block text-sm text-muted" htmlFor="lookup-email">
+          <label className="mb-1 block font-mono text-xs uppercase text-muted" htmlFor="lookup-email">
             Email
           </label>
           <input
@@ -80,7 +99,7 @@ export function MyBookingsLookup() {
       </form>
 
       {searched && (
-        <div className="space-y-4">
+        <div className="space-y-6">
           {bookings.length === 0 ? (
             <p className="text-center text-muted">No hay reservas con este email.</p>
           ) : (
@@ -91,58 +110,64 @@ export function MyBookingsLookup() {
                 </p>
               )}
               {upcoming.length > 0 && (
-                <section className="card">
-                  <h3 className="font-display text-lg text-accent">Próximas citas</h3>
-                  <ul className="mt-4 space-y-3">
+                <section>
+                  <h3 className="font-display mb-4 text-lg text-accent">Próximas citas</h3>
+                  <ul className="space-y-4">
                     {upcoming.map((b) => (
-                      <li
-                        key={b.id}
-                        className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-surface-light p-3"
-                      >
-                        <div>
-                          <p className="font-medium">{b.serviceName}</p>
-                          <p className="text-sm text-muted">
-                            {formatDateTimeChile(new Date(b.startAt))}
-                          </p>
-                        </div>
-                        <span className="status-confirmed text-sm">Confirmada</span>
+                      <li key={b.id}>
+                        <TicketCard accent>
+                          <div className="flex flex-wrap items-start justify-between gap-3">
+                            <div>
+                              <p className="font-display text-lg">{b.serviceName}</p>
+                              <p className="mt-1 font-mono text-sm text-muted">
+                                {formatDateTimeChile(new Date(b.startAt))}
+                              </p>
+                            </div>
+                            <span className="status-confirmed font-mono text-xs uppercase">
+                              Confirmada
+                            </span>
+                          </div>
+                        </TicketCard>
                       </li>
                     ))}
                   </ul>
                 </section>
               )}
               {past.length > 0 && (
-                <section className="card">
-                  <h3 className="font-display text-lg">Historial</h3>
-                  <ul className="mt-4 space-y-3">
+                <section>
+                  <h3 className="font-display mb-4 text-lg">Historial</h3>
+                  <ul className="space-y-4">
                     {past.map((b) => (
-                      <li
-                        key={b.id}
-                        className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border p-3"
-                      >
-                        <div>
-                          <p className="font-medium">{b.serviceName}</p>
-                          <p className="text-sm text-muted">
-                            {formatDateTimeChile(new Date(b.startAt))}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span
-                            className={
-                              b.status === 'cancelled' ? 'status-cancelled text-sm' : 'text-sm text-muted'
-                            }
-                          >
-                            {b.status === 'cancelled' ? 'Cancelada' : 'Pasada'}
-                          </span>
-                          {b.status !== 'cancelled' && (
-                            <a
-                              href={`/reservar?serviceId=${b.serviceId}`}
-                              className="text-sm text-accent hover:underline"
-                            >
-                              Reservar de nuevo
-                            </a>
-                          )}
-                        </div>
+                      <li key={b.id}>
+                        <TicketCard>
+                          <div className="flex flex-wrap items-start justify-between gap-3">
+                            <div>
+                              <p className="font-medium">{b.serviceName}</p>
+                              <p className="mt-1 font-mono text-sm text-muted">
+                                {formatDateTimeChile(new Date(b.startAt))}
+                              </p>
+                            </div>
+                            <div className="flex flex-col items-end gap-2">
+                              <span
+                                className={
+                                  b.status === 'cancelled'
+                                    ? 'status-cancelled font-mono text-xs uppercase'
+                                    : 'font-mono text-xs uppercase text-muted'
+                                }
+                              >
+                                {b.status === 'cancelled' ? 'Cancelada' : 'Pasada'}
+                              </span>
+                              {b.status !== 'cancelled' && (
+                                <a
+                                  href={`/reservar?serviceId=${b.serviceId}`}
+                                  className="text-sm text-accent hover:underline"
+                                >
+                                  Reservar de nuevo
+                                </a>
+                              )}
+                            </div>
+                          </div>
+                        </TicketCard>
                       </li>
                     ))}
                   </ul>

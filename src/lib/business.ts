@@ -6,7 +6,7 @@ export function getBusinessSlug(): string {
   return (
     import.meta.env.PUBLIC_BUSINESS_SLUG ??
     process.env.PUBLIC_BUSINESS_SLUG ??
-    'pato-barber'
+    'picard-barber'
   );
 }
 

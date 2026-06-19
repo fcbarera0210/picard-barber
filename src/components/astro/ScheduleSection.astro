@@ -1,0 +1,37 @@
+---
+interface ScheduleDay {
+  day: string;
+  ranges: string[];
+}
+
+interface Props {
+  schedule: ScheduleDay[];
+}
+
+const { schedule } = Astro.props;
+---
+
+{
+  schedule.length > 0 && (
+    <section id="horarios" class="mt-20">
+      <div class="mb-10 text-center">
+        <h2 class="font-display text-3xl tracking-tight md:text-4xl">
+          <span class="text-gradient-cyber">Horarios</span>
+        </h2>
+        <p class="mt-2 text-muted">Cuándo puedes visitarnos</p>
+      </div>
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {schedule.map((s) => (
+          <div class="card card-hover">
+            <p class="font-display text-lg text-accent">{s.day}</p>
+            <ul class="mt-2 space-y-1">
+              {s.ranges.map((r) => (
+                <li class="font-mono text-sm text-muted">{r}</li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+    </section>
+  )
+}

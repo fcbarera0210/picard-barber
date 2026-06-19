@@ -1,8 +1,13 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import Hero from '../components/astro/Hero.astro';
+import ServicesGrid from '../components/astro/ServicesGrid.astro';
+import ScheduleSection from '../components/astro/ScheduleSection.astro';
+import LocationSection from '../components/astro/LocationSection.astro';
+import CTABanner from '../components/astro/CTABanner.astro';
+import { ScrollReveal } from '../components/react/ScrollReveal';
 import { getActiveBusiness } from '../lib/business';
 import { DAYS_ORDER, DAY_LABELS } from '../lib/schedule';
-import { formatPriceCents } from '../lib/format';
 import { db } from '../lib/db';
 import { services, availabilityBlocks } from '../lib/db/schema';
 import { eq, asc } from 'drizzle-orm';
@@ -36,95 +41,28 @@ const scheduleByDay = DAYS_ORDER.map((day) => ({
 ---
 
 <BaseLayout>
-  <section class="relative overflow-hidden rounded-3xl border border-border bg-surface px-6 py-16 md:px-12 md:py-24">
-    <div class="relative z-10 max-w-2xl">
-      <p class="mb-2 text-sm font-medium uppercase tracking-widest text-accent">Barbería premium</p>
-      <h1 class="font-display text-5xl leading-tight text-ink md:text-7xl">
-        {biz?.name ?? 'Pato Barber'}
-      </h1>
-      <p class="mt-6 text-lg text-muted">
-        {biz?.description ?? 'Cortes clásicos y modernos. Reserva tu hora en segundos.'}
-      </p>
-      <div class="mt-8 flex flex-wrap gap-4">
-        <a href="/reservar" class="btn-primary">Reservar ahora</a>
-        <a href="#servicios" class="btn-secondary">Ver servicios</a>
-      </div>
-    </div>
-    <div
-      class="pointer-events-none absolute -right-8 -top-8 h-64 w-64 rounded-full bg-accent/10 blur-3xl"
-      aria-hidden="true"
-    >
-    </div>
-  </section>
+  <Hero
+    name={biz?.name ?? 'Picard Barber'}
+    description={biz?.description ?? 'Cortes clásicos y modernos. Reserva tu hora en segundos.'}
+  />
 
-  <section id="servicios" class="mt-16">
-    <h2 class="font-display mb-8 text-3xl text-accent">Servicios</h2>
-    {
-      activeServices.length === 0 ? (
-        <p class="text-muted">Próximamente nuevos servicios.</p>
-      ) : (
-        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {activeServices.map((s) => (
-            <article class="card flex flex-col">
-              <h3 class="font-display text-xl">{s.name}</h3>
-              {s.description && <p class="mt-2 flex-1 text-sm text-muted">{s.description}</p>}
-              <div class="mt-4 flex items-center justify-between">
-                <span class="text-accent">{formatPriceCents(s.priceCents)}</span>
-                <span class="text-sm text-muted">{s.durationMin} min</span>
-              </div>
-              <a href={`/reservar?serviceId=${s.id}`} class="btn-primary mt-4 text-center text-sm">
-                Reservar
-              </a>
-            </article>
-          ))}
-        </div>
-      )
-    }
-  </section>
+  <ScrollReveal client:load>
+    <ServicesGrid services={activeServices} />
+  </ScrollReveal>
 
-  {
-    scheduleByDay.length > 0 && (
-      <section class="mt-16">
-        <h2 class="font-display mb-8 text-3xl text-accent">Horarios</h2>
-        <div class="card grid gap-4 sm:grid-cols-2">
-          {scheduleByDay.map((s) => (
-            <div>
-              <p class="font-medium">{s.day}</p>
-              {s.ranges.map((r) => (
-                <p class="text-sm text-muted">{r}</p>
-              ))}
-            </div>
-          ))}
-        </div>
-      </section>
-    )
-  }
+  <ScrollReveal client:load>
+    <ScheduleSection schedule={scheduleByDay} />
+  </ScrollReveal>
 
   {
     biz?.address && (
-      <section class="mt-16">
-        <h2 class="font-display mb-8 text-3xl text-accent">Ubicación</h2>
-        <div class="card">
-          <p>{biz.address}</p>
-          {
-            biz.mapsUrl && (
-              <a
-                href={biz.mapsUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                class="mt-4 inline-block text-accent hover:underline"
-              >
-                Ver en mapa
-              </a>
-            )
-          }
-        </div>
-      </section>
+      <ScrollReveal client:load>
+        <LocationSection address={biz.address} mapsUrl={biz.mapsUrl} />
+      </ScrollReveal>
     )
   }
 
-  <section class="mt-16 rounded-3xl border border-accent/30 bg-accent/5 px-6 py-12 text-center">
-    <h2 class="font-display text-3xl">¿Listo para tu próximo corte?</h2>
-    <a href="/reservar" class="btn-primary mt-6">Reservar ahora</a>
-  </section>
+  <ScrollReveal client:load>
+    <CTABanner />
+  </ScrollReveal>
 </BaseLayout>

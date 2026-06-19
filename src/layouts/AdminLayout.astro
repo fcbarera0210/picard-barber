@@ -23,15 +23,18 @@ function navClass(href: string) {
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <title>Admin — Pato Barber</title>
+    <title>Admin — Picard Barber</title>
   </head>
   <body class="min-h-screen bg-bg text-ink">
-    <header class="sticky top-0 z-50 border-b border-border bg-surface">
+    <header class="sticky top-0 z-50 border-b border-white/5 bg-surface/90 backdrop-blur-md">
       <div class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-4">
-        <a href="/admin" class="font-display text-xl text-accent">Panel admin</a>
+        <a href="/admin" class="font-display text-xl tracking-tight">
+          <span class="text-accent">Panel</span>
+          <span class="text-muted"> admin</span>
+        </a>
         <div class="flex items-center gap-2">
           <nav class="hidden flex-wrap gap-1 sm:flex">
             <a href="/admin" class={navClass('/admin')}>Dashboard</a>

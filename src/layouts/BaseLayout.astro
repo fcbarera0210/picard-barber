@@ -1,6 +1,10 @@
 ---
 import '../styles/global.css';
+import { ClientRouter } from 'astro:transitions';
 import { MobileNav } from '../components/react/MobileNav';
+import { TechnoSynth } from '../components/react/TechnoSynth';
+import AmbientBackground from '../components/astro/AmbientBackground.astro';
+import SiteFooter from '../components/astro/SiteFooter.astro';
 import { getActiveBusiness } from '../lib/business';
 
 interface Props {
@@ -9,7 +13,7 @@ interface Props {
 }
 
 const biz = await getActiveBusiness();
-const businessName = biz?.name ?? 'Pato Barber';
+const businessName = biz?.name ?? 'Picard Barber';
 
 const {
   title = businessName,
@@ -27,34 +31,42 @@ const {
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Space+Grotesk:wght@500;600;700;800&display=swap"
       rel="stylesheet"
     />
     <title>{title}</title>
+    <ClientRouter />
   </head>
   <body class="flex min-h-dvh flex-col bg-bg text-ink">
-    <header class="sticky top-0 z-50 border-b border-border bg-bg/95 backdrop-blur">
-      <nav class="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-        <a href="/" class="font-display text-2xl tracking-wide text-accent">
-          {businessName}
+    <AmbientBackground />
+    <header class="sticky top-0 z-50 border-b border-white/5 bg-bg/80 backdrop-blur-md">
+      <nav class="mx-auto flex max-w-7xl items-center justify-between px-4 py-4">
+        <a href="/" class="font-display text-xl font-bold tracking-tight">
+          <span class="text-accent neon-text-cyan">PICARD</span>
+          <span class="text-white"> BARBER</span>
         </a>
-        <div class="hidden items-center gap-6 text-sm font-medium sm:flex">
-          <a href="/#servicios" class="text-muted hover:text-ink">Servicios</a>
-          <a href="/mis-reservas" class="text-muted hover:text-ink">Mis reservas</a>
-          <a href="/reservar" class="btn-primary px-4 py-2 text-sm">Reservar</a>
+        <div class="hidden items-center gap-8 text-sm font-medium lg:flex">
+          <a href="/#servicios" class="nav-link pb-1">Servicios</a>
+          <a href="/#horarios" class="nav-link pb-1">Horarios</a>
+          <a href="/#ubicacion" class="nav-link pb-1">Ubicación</a>
+          <a href="/mis-reservas" class="nav-link pb-1">Mis reservas</a>
+          <a href="/reservar" class="btn-primary px-5 py-2.5 text-sm">Reservar</a>
         </div>
-        <MobileNav client:load businessName={businessName} />
+        <div class="flex items-center gap-2">
+          <TechnoSynth client:load transition:persist="techno-audio" variant="header" />
+          <MobileNav client:load />
+        </div>
       </nav>
     </header>
-    <main class="relative z-10 mx-auto w-full max-w-6xl flex-1 px-4 py-8">
+    <main class="relative z-10 mx-auto w-full max-w-7xl flex-1 px-4 py-8" transition:animate="fade">
       <slot />
     </main>
-    <footer class="border-t border-border bg-surface py-8">
-      <div class="mx-auto max-w-6xl px-4 text-center text-sm text-muted">
-        <p class="font-display text-lg text-ink">{businessName}</p>
-        {biz?.address && <p class="mt-2">{biz.address}</p>}
-        <p class="mt-4">&copy; {new Date().getFullYear()} {businessName}</p>
-      </div>
-    </footer>
+    <SiteFooter
+      businessName={businessName}
+      address={biz?.address}
+      mapsUrl={biz?.mapsUrl}
+      instagramUrl={biz?.instagramUrl}
+      whatsappNumber={biz?.whatsappNumber}
+    />
   </body>
 </html>

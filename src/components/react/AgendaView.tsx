@@ -26,7 +26,7 @@ export function AgendaView() {
   const [date, setDate] = useState(toDateInput(new Date()));
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
-  const [businessName, setBusinessName] = useState('Pato Barber');
+  const [businessName, setBusinessName] = useState('Picard Barber');
   const { run, isLoading } = useAsyncAction();
 
   async function load() {

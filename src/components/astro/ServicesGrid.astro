@@ -1,0 +1,47 @@
+---
+import { formatPriceCents } from '../../lib/format';
+
+type Service = {
+  id: string;
+  name: string;
+  description: string | null;
+  durationMin: number;
+  priceCents: number;
+};
+
+interface Props {
+  services: Service[];
+}
+
+const { services } = Astro.props;
+---
+
+<section id="servicios" class="mt-20">
+  <div class="mb-10 text-center">
+    <h2 class="font-display text-3xl tracking-tight md:text-4xl">
+      <span class="text-gradient-cyber">Servicios</span>
+    </h2>
+    <p class="mt-2 text-muted">Elige tu corte y reserva en segundos</p>
+  </div>
+  {
+    services.length === 0 ? (
+      <p class="text-center text-muted">Próximamente nuevos servicios.</p>
+    ) : (
+      <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {services.map((s) => (
+          <article class="card card-hover service-card-laser relative flex flex-col overflow-hidden">
+            <h3 class="font-display text-xl">{s.name}</h3>
+            {s.description && <p class="mt-2 flex-1 text-sm text-muted">{s.description}</p>}
+            <div class="mt-4 flex items-center justify-between border-t border-white/5 pt-4">
+              <span class="font-mono text-lg text-accent">{formatPriceCents(s.priceCents)}</span>
+              <span class="font-mono text-xs text-muted">{s.durationMin} min</span>
+            </div>
+            <a href={`/reservar?serviceId=${s.id}`} class="btn-primary mt-4 text-center text-sm">
+              Reservar
+            </a>
+          </article>
+        ))}
+      </div>
+    )
+  }
+</section>

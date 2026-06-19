@@ -45,9 +45,11 @@ export function AdminLoginForm({ authError }: Props) {
   const urlError = authError ? (errorMessages[authError] ?? 'Error al iniciar sesión.') : '';
 
   return (
-    <form method="post" action="/api/auth/callback/credentials" className="card mx-auto max-w-md space-y-5">
+    <form method="post" action="/api/auth/callback/credentials" className="card laser-scanner mx-auto max-w-md space-y-5">
       <div>
-        <h1 className="font-display text-3xl text-accent">Admin</h1>
+        <h1 className="font-display text-3xl">
+          <span className="text-accent">Admin</span>
+        </h1>
         <p className="mt-1 text-sm text-muted">Panel de gestión del local</p>
       </div>
 
