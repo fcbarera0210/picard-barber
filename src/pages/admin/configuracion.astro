@@ -1,0 +1,9 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { BusinessConfig } from '../../components/react/BusinessConfig';
+---
+
+<AdminLayout>
+  <h1 class="font-display mb-8 text-3xl text-accent">Configuración</h1>
+  <BusinessConfig client:load />
+</AdminLayout>

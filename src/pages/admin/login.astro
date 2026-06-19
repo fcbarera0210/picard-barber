@@ -1,0 +1,25 @@
+---
+import '../../styles/global.css';
+import { AdminLoginForm } from '../../components/react/AdminLoginForm';
+
+export const prerender = false;
+
+const authError = Astro.url.searchParams.get('error');
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <title>Admin — Pato Barber</title>
+  </head>
+  <body class="flex min-h-screen items-center justify-center bg-bg px-4">
+    <AdminLoginForm client:load authError={authError} />
+  </body>
+</html>

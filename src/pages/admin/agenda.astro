@@ -1,0 +1,9 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { AgendaView } from '../../components/react/AgendaView';
+---
+
+<AdminLayout>
+  <h1 class="font-display mb-8 text-3xl text-accent">Agenda</h1>
+  <AgendaView client:load />
+</AdminLayout>

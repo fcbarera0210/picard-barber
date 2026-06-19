@@ -1,0 +1,60 @@
+---
+import '../styles/global.css';
+import { MobileNav } from '../components/react/MobileNav';
+import { getActiveBusiness } from '../lib/business';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const biz = await getActiveBusiness();
+const businessName = biz?.name ?? 'Pato Barber';
+
+const {
+  title = businessName,
+  description = biz?.description ?? 'Barbería premium. Reserva tu hora online.',
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="es" class="min-h-dvh">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content={description} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap"
+      rel="stylesheet"
+    />
+    <title>{title}</title>
+  </head>
+  <body class="flex min-h-dvh flex-col bg-bg text-ink">
+    <header class="sticky top-0 z-50 border-b border-border bg-bg/95 backdrop-blur">
+      <nav class="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
+        <a href="/" class="font-display text-2xl tracking-wide text-accent">
+          {businessName}
+        </a>
+        <div class="hidden items-center gap-6 text-sm font-medium sm:flex">
+          <a href="/#servicios" class="text-muted hover:text-ink">Servicios</a>
+          <a href="/mis-reservas" class="text-muted hover:text-ink">Mis reservas</a>
+          <a href="/reservar" class="btn-primary px-4 py-2 text-sm">Reservar</a>
+        </div>
+        <MobileNav client:load businessName={businessName} />
+      </nav>
+    </header>
+    <main class="relative z-10 mx-auto w-full max-w-6xl flex-1 px-4 py-8">
+      <slot />
+    </main>
+    <footer class="border-t border-border bg-surface py-8">
+      <div class="mx-auto max-w-6xl px-4 text-center text-sm text-muted">
+        <p class="font-display text-lg text-ink">{businessName}</p>
+        {biz?.address && <p class="mt-2">{biz.address}</p>}
+        <p class="mt-4">&copy; {new Date().getFullYear()} {businessName}</p>
+      </div>
+    </footer>
+  </body>
+</html>

@@ -1,0 +1,56 @@
+---
+import '../styles/global.css';
+import { AdminMobileNav } from '../components/react/AdminMobileNav';
+import { AdminSignOut } from '../components/react/AdminSignOut';
+
+const pathname = Astro.url.pathname;
+
+function navClass(href: string) {
+  const active =
+    href === '/admin'
+      ? pathname === '/admin'
+      : pathname === href || pathname.startsWith(`${href}/`);
+  return active ? 'admin-nav-link admin-nav-link-active' : 'admin-nav-link';
+}
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap"
+      rel="stylesheet"
+    />
+    <title>Admin — Pato Barber</title>
+  </head>
+  <body class="min-h-screen bg-bg text-ink">
+    <header class="sticky top-0 z-50 border-b border-border bg-surface">
+      <div class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-4">
+        <a href="/admin" class="font-display text-xl text-accent">Panel admin</a>
+        <div class="flex items-center gap-2">
+          <nav class="hidden flex-wrap gap-1 sm:flex">
+            <a href="/admin" class={navClass('/admin')}>Dashboard</a>
+            <a href="/admin/agenda" class={navClass('/admin/agenda')}>Agenda</a>
+            <a href="/admin/servicios" class={navClass('/admin/servicios')}>Servicios</a>
+            <a href="/admin/disponibilidad" class={navClass('/admin/disponibilidad')}>Disponibilidad</a>
+            <a href="/admin/clientes" class={navClass('/admin/clientes')}>Clientes</a>
+            <a href="/admin/configuracion" class={navClass('/admin/configuracion')}>Config</a>
+            <a href="/" class="admin-nav-link text-muted">Sitio público</a>
+          </nav>
+          <div class="hidden sm:block">
+            <AdminSignOut client:load />
+          </div>
+          <AdminMobileNav pathname={pathname} client:load />
+        </div>
+      </div>
+    </header>
+    <main class="mx-auto max-w-7xl px-4 py-8">
+      <slot />
+    </main>
+  </body>
+</html>

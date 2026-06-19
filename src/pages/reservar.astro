@@ -1,0 +1,15 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { BookingFlow } from '../components/react/BookingFlow';
+import { getActiveBusiness } from '../lib/business';
+
+export const prerender = false;
+
+const biz = await getActiveBusiness();
+const serviceId = Astro.url.searchParams.get('serviceId') ?? undefined;
+---
+
+<BaseLayout title={`Reservar — ${biz?.name ?? 'Pato Barber'}`}>
+  <h1 class="font-display mb-8 text-center text-4xl text-accent">Reserva tu hora</h1>
+  <BookingFlow client:load initialServiceId={serviceId} />
+</BaseLayout>

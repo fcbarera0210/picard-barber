@@ -1,0 +1,12 @@
+dist/
+.vercel/
+.astro/
+node_modules/
+npm-debug.log*
+.env
+.env.*
+!.env.example
+.DS_Store
+.idea/
+.vscode/
+scripts/

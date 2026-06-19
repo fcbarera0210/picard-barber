@@ -1,0 +1,13 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { MyBookingsLookup } from '../components/react/MyBookingsLookup';
+import { getActiveBusiness } from '../lib/business';
+
+export const prerender = false;
+
+const biz = await getActiveBusiness();
+---
+
+<BaseLayout title={`Mis reservas — ${biz?.name ?? 'Pato Barber'}`}>
+  <MyBookingsLookup client:load />
+</BaseLayout>

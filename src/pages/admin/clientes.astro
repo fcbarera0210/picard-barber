@@ -1,0 +1,9 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { ClientsList } from '../../components/react/ClientsList';
+---
+
+<AdminLayout>
+  <h1 class="font-display mb-8 text-3xl text-accent">Clientes</h1>
+  <ClientsList client:load />
+</AdminLayout>
