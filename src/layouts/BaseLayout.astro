@@ -52,7 +52,9 @@ const {
           <a href="/reservar" class="btn-primary px-5 py-2.5">Reservar</a>
         </div>
         <div class="flex items-center gap-2">
-          <TechnoSynth client:load transition:persist="techno-audio" variant="header" />
+          <div class="hidden lg:block">
+            <TechnoSynth client:load transition:persist="techno-audio" variant="header" />
+          </div>
           <MobileNav client:load />
         </div>
       </nav>

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { getTechnoBeatEngine, subscribeTechnoPlaying } from '../../lib/audio/techno-beat';
 
 type TechnoSynthProps = {
-  variant?: 'header' | 'compact';
+  variant?: 'header' | 'compact' | 'menu';
 };
 
 function volumeToPercent(volume: number): number {
@@ -83,6 +83,98 @@ export function TechnoSynth({ variant = 'header' }: TechnoSynthProps) {
   if (disabled) return null;
 
   const isCompact = variant === 'compact';
+  const isMenu = variant === 'menu';
+
+  const playButton = (
+    <button
+      type="button"
+      onClick={toggle}
+      className={`inline-flex items-center gap-2 transition-colors hover:text-accent ${
+        isMenu ? 'w-full justify-center rounded-lg border border-white/10 bg-surface px-3 py-2.5' : ''
+      }`}
+      aria-pressed={playing}
+      aria-label={playing ? 'Detener música' : 'Activar música'}
+    >
+      <span
+        className={`h-2 w-2 rounded-full ${playing ? 'bg-success animate-pulse' : 'bg-danger'}`}
+        aria-hidden="true"
+      />
+      <span className="font-mono text-xs uppercase tracking-wider text-muted">
+        {playing ? 'Detener' : 'Música'}
+      </span>
+      {playing && !isMenu && (
+        <span className="hidden items-end gap-0.5 sm:flex" aria-hidden="true">
+          {barHeights.map((h, i) => (
+            <span
+              key={i}
+              className="w-0.5 rounded-full bg-accent transition-all duration-75"
+              style={{ height: `${h}px` }}
+            />
+          ))}
+        </span>
+      )}
+    </button>
+  );
+
+  const volumeControl = (
+    <label
+      className={`flex items-center gap-2 ${
+        isMenu ? 'w-full' : 'gap-1.5 border-l border-white/10 pl-2'
+      }`}
+    >
+      <span className="sr-only">Volumen de música</span>
+      <svg
+        width="14"
+        height="14"
+        viewBox="0 0 24 24"
+        fill="none"
+        className="shrink-0 text-muted"
+        aria-hidden="true"
+      >
+        <path
+          d="M5 9v6h4l5 5V4L9 9H5z"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinejoin="round"
+        />
+        {volume > 0 && (
+          <path
+            d="M16 8a5 5 0 010 8M18.5 5.5a8.5 8.5 0 010 13"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+          />
+        )}
+      </svg>
+      <input
+        type="range"
+        min={0}
+        max={100}
+        step={1}
+        value={volume}
+        onChange={(e) => void handleVolumeChange(Number(e.target.value))}
+        className={`audio-volume-slider ${isMenu ? 'min-w-0 flex-1' : 'w-14 sm:w-20'}`}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={volume}
+        aria-label="Volumen de música"
+      />
+      <span
+        className={`shrink-0 font-mono text-[10px] text-muted ${isMenu ? 'inline' : 'hidden min-w-[2rem] sm:inline'}`}
+      >
+        {volume}%
+      </span>
+    </label>
+  );
+
+  if (isMenu) {
+    return (
+      <div className="flex w-full flex-col gap-3" onClick={(e) => e.stopPropagation()}>
+        {playButton}
+        {volumeControl}
+      </div>
+    );
+  }
 
   return (
     <div
@@ -90,75 +182,8 @@ export function TechnoSynth({ variant = 'header' }: TechnoSynthProps) {
         isCompact ? 'px-2 py-2' : 'px-2 py-1.5'
       }`}
     >
-      <button
-        type="button"
-        onClick={toggle}
-        className="inline-flex items-center gap-2 transition-colors hover:text-accent"
-        aria-pressed={playing}
-        aria-label={playing ? 'Detener música' : 'Activar música'}
-      >
-        <span
-          className={`h-2 w-2 rounded-full ${playing ? 'bg-success animate-pulse' : 'bg-danger'}`}
-          aria-hidden="true"
-        />
-        <span className="font-mono text-xs uppercase tracking-wider text-muted">
-          {playing ? 'Detener' : 'Música'}
-        </span>
-        {playing && (
-          <span className="hidden items-end gap-0.5 sm:flex" aria-hidden="true">
-            {barHeights.map((h, i) => (
-              <span
-                key={i}
-                className="w-0.5 rounded-full bg-accent transition-all duration-75"
-                style={{ height: `${h}px` }}
-              />
-            ))}
-          </span>
-        )}
-      </button>
-
-      <label className="flex items-center gap-1.5 border-l border-white/10 pl-2">
-        <span className="sr-only">Volumen de música</span>
-        <svg
-          width="14"
-          height="14"
-          viewBox="0 0 24 24"
-          fill="none"
-          className="shrink-0 text-muted"
-          aria-hidden="true"
-        >
-          <path
-            d="M5 9v6h4l5 5V4L9 9H5z"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinejoin="round"
-          />
-          {volume > 0 && (
-            <path
-              d="M16 8a5 5 0 010 8M18.5 5.5a8.5 8.5 0 010 13"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-            />
-          )}
-        </svg>
-        <input
-          type="range"
-          min={0}
-          max={100}
-          step={1}
-          value={volume}
-          onChange={(e) => void handleVolumeChange(Number(e.target.value))}
-          className="audio-volume-slider w-14 sm:w-20"
-          aria-valuemin={0}
-          aria-valuemax={100}
-          aria-valuenow={volume}
-          aria-label="Volumen de música"
-        />
-        <span className="hidden min-w-[2rem] font-mono text-[10px] text-muted sm:inline">
-          {volume}%
-        </span>
-      </label>
+      {playButton}
+      {volumeControl}
     </div>
   );
 }
