@@ -34,7 +34,7 @@ export function AdminLoginForm({ authError }: Props) {
   if (error || !csrfToken) {
     return (
       <div className="card text-center">
-        <p className="font-display text-lg">No se pudo iniciar sesión</p>
+        <p className="font-heading text-lg">No se pudo iniciar sesión</p>
         <p className="mt-2 text-sm text-muted">
           {error || 'Revisa que AUTH_SECRET esté configurado en .env'}
         </p>
@@ -47,7 +47,7 @@ export function AdminLoginForm({ authError }: Props) {
   return (
     <form method="post" action="/api/auth/callback/credentials" className="card laser-scanner mx-auto max-w-md space-y-5">
       <div>
-        <h1 className="font-display text-3xl">
+        <h1 className="font-heading text-3xl">
           <span className="text-accent">Admin</span>
         </h1>
         <p className="mt-1 text-sm text-muted">Panel de gestión del local</p>

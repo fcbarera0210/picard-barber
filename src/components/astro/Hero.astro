@@ -1,77 +1,46 @@
 ---
-interface Props {
-  name: string;
-  description: string;
-}
-
-const { name, description } = Astro.props;
-
-const parts = name.trim().split(/\s+/);
-const firstName = parts[0] ?? 'Picard';
-const restName = parts.slice(1).join(' ') || 'Barber';
----
-
-<section class="relative overflow-hidden rounded-2xl border border-white/5 bg-surface/40 px-6 py-16 backdrop-blur-sm md:px-12 md:py-24">
-  <div class="absolute -top-20 left-0 h-80 w-80 rounded-full ambient-glow-cyan opacity-60 blur-3xl" aria-hidden="true"></div>
-  <div class="absolute -bottom-16 right-0 h-72 w-72 rounded-full ambient-glow-purple opacity-50 blur-3xl" aria-hidden="true"></div>
-
-  <div class="relative z-10 grid items-center gap-12 lg:grid-cols-[1.1fr_0.9fr]">
-    <div class="space-y-8">
-      <span class="inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-3 py-1 text-xs font-mono uppercase tracking-widest text-accent">
-        <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-accent"></span>
-        Barbería premium
-      </span>
-
-      <div class="space-y-2">
-        <p class="font-mono text-xs uppercase tracking-[0.35em] text-muted">Estilo · Precisión · Actitud</p>
-        <h1 class="font-display text-5xl font-bold leading-[0.95] tracking-tight uppercase sm:text-6xl md:text-7xl lg:text-8xl">
-          <span class="block text-white">{firstName}</span>
-          <span class="text-gradient-cyber block">{restName}</span>
-        </h1>
-      </div>
-
-      <p class="max-w-xl text-lg text-muted">
-        {description}
-      </p>
-
-      <div class="flex flex-wrap gap-4">
-        <a href="/reservar" class="btn-primary">Reservar ahora</a>
-        <a href="#servicios" class="btn-secondary">Ver servicios</a>
-      </div>
-    </div>
-
-    <div class="relative flex items-center justify-center">
-      <div class="hero-orbit-card laser-scanner relative w-full max-w-md overflow-hidden rounded-2xl border border-white/10 bg-surface/70 p-8 backdrop-blur-md neon-shadow-cyan">
-        <div class="mb-6 flex items-center justify-between border-b border-white/5 pb-4">
-          <span class="font-mono text-[10px] uppercase tracking-widest text-accent">Sesión activa</span>
-          <span class="h-2 w-2 animate-pulse rounded-full bg-accent"></span>
-        </div>
-
-        <div class="relative mx-auto flex aspect-square max-w-[260px] items-center justify-center">
-          <div class="hero-orbit-ring absolute inset-0 rounded-full border border-white/5"></div>
-          <div class="hero-orbit-ring hero-orbit-ring--cyan absolute inset-3 rounded-full"></div>
-          <div class="hero-orbit-ring hero-orbit-ring--purple absolute inset-8 rounded-full"></div>
-          <div class="hero-orbit-core absolute inset-[30%] rounded-full bg-gradient-to-br from-accent/20 to-accent-alt/20 blur-sm"></div>
-          <div class="relative text-center">
-            <p class="font-display text-5xl font-bold text-white">01</p>
-            <p class="mt-1 font-mono text-[10px] uppercase tracking-[0.3em] text-muted">Next slot</p>
-          </div>
-        </div>
-
-        <div class="mt-8 space-y-3 border-t border-white/5 pt-5">
-          <div class="flex items-center justify-between font-mono text-xs">
-            <span class="text-muted">Corte</span>
-            <span class="text-accent">30 min</span>
-          </div>
-          <div class="flex items-center justify-between font-mono text-xs">
-            <span class="text-muted">Barba</span>
-            <span class="text-accent-alt">20 min</span>
-          </div>
-          <div class="h-1 overflow-hidden rounded-full bg-white/5">
-            <div class="h-full w-3/4 rounded-full bg-gradient-to-r from-accent to-accent-alt"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
+interface Props {
+  name: string;
+  description: string;
+}
+
+const { description } = Astro.props;
+---
+
+<section class="relative overflow-hidden py-12 md:py-20">
+  <div
+    class="pointer-events-none absolute left-1/2 top-1/2 z-0 h-[min(90vw,520px)] w-[min(90vw,520px)] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/10 opacity-40"
+    aria-hidden="true"
+  ></div>
+  <div
+    class="pointer-events-none absolute left-1/2 top-1/2 z-0 h-[min(100vw,600px)] w-[min(100vw,600px)] -translate-x-1/2 -translate-y-1/2 rounded-full border border-dashed border-accent/30 opacity-30"
+    aria-hidden="true"
+  ></div>
+
+  <div class="relative z-10 grid items-center gap-12 xl:grid-cols-[1.15fr_0.85fr]">
+    <div class="space-y-6">
+      <div class="space-y-2">
+        <p class="font-mono text-xs uppercase tracking-[0.25em] text-accent">// Barbería premium & estilo</p>
+        <h1 class="font-heading text-5xl font-bold uppercase italic leading-[0.95] tracking-tight sm:text-6xl md:text-7xl lg:text-8xl">
+          <span class="text-white neon-text-acid">Picard</span><span class="text-gradient-cyber">Barber</span>
+        </h1>
+      </div>
+
+      <p class="max-w-xl text-base text-muted md:text-lg">
+        {description}
+      </p>
+
+      <div class="flex flex-wrap gap-4 pt-2">
+        <a href="/reservar" class="btn-primary">Reservar ahora</a>
+        <a href="#servicios" class="btn-secondary">Ver servicios</a>
+      </div>
+
+      <div class="flex items-center gap-3 pt-4 font-mono text-xs text-muted">
+        <span>// Navegación</span>
+        <span class="text-accent">▶</span>
+        <span class="text-accent/70">▶</span>
+        <span class="text-accent/40">▶</span>
+      </div>
+    </div>
+  </div>
+</section>

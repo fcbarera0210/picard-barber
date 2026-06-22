@@ -19,7 +19,7 @@ function TicketCard({
 }) {
   return (
     <div
-      className={`ticket-card overflow-hidden rounded-xl ${accent ? 'neon-shadow-cyan' : ''}`}
+      className={`ticket-card overflow-hidden rounded-xl ${accent ? 'neon-shadow-acid' : ''}`}
     >
       <div className="ticket-card-top" />
       <div className="p-5">{children}</div>
@@ -71,7 +71,7 @@ export function MyBookingsLookup() {
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <form onSubmit={handleSearch} className="card laser-scanner space-y-4">
-        <h2 className="font-display text-2xl">
+        <h2 className="font-heading text-2xl">
           <span className="text-gradient-cyber">Mis reservas</span>
         </h2>
         <p className="text-sm text-muted">Ingresa tu email para ver tu historial de citas.</p>
@@ -111,14 +111,14 @@ export function MyBookingsLookup() {
               )}
               {upcoming.length > 0 && (
                 <section>
-                  <h3 className="font-display mb-4 text-lg text-accent">Próximas citas</h3>
+                  <h3 className="font-heading mb-4 text-lg text-accent">Próximas citas</h3>
                   <ul className="space-y-4">
                     {upcoming.map((b) => (
                       <li key={b.id}>
                         <TicketCard accent>
                           <div className="flex flex-wrap items-start justify-between gap-3">
                             <div>
-                              <p className="font-display text-lg">{b.serviceName}</p>
+                              <p className="font-heading text-lg">{b.serviceName}</p>
                               <p className="mt-1 font-mono text-sm text-muted">
                                 {formatDateTimeChile(new Date(b.startAt))}
                               </p>
@@ -135,7 +135,7 @@ export function MyBookingsLookup() {
               )}
               {past.length > 0 && (
                 <section>
-                  <h3 className="font-display mb-4 text-lg">Historial</h3>
+                  <h3 className="font-heading mb-4 text-lg">Historial</h3>
                   <ul className="space-y-4">
                     {past.map((b) => (
                       <li key={b.id}>

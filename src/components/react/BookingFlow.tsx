@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { formatPriceCents } from '../../lib/format';
+import { resolveBarberIcon } from '../../lib/barber-icons';
+import { BarberIcon } from './BarberIcon';
 import { BookingTicketPreview } from './BookingTicketPreview';
 
 type Service = {
@@ -98,7 +100,7 @@ export function BookingFlow({ initialServiceId }: BookingFlowProps) {
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-success/30 bg-success/10 text-3xl text-success">
             ✓
           </div>
-          <h2 className="font-display text-3xl text-gradient-cyber">¡Reserva confirmada!</h2>
+          <h2 className="font-heading text-3xl text-gradient-cyber">¡Reserva confirmada!</h2>
           <p className="mt-3 text-muted">
             Te esperamos el {date} a las {time}. Revisa tus citas en cualquier momento con tu email.
           </p>
@@ -122,7 +124,7 @@ export function BookingFlow({ initialServiceId }: BookingFlowProps) {
       <div className="card laser-scanner">
         <div className="mb-6 flex items-center gap-3">
           <span className="step-badge">{step}</span>
-          <h2 className="font-display text-2xl">{stepTitles[step - 1]}</h2>
+          <h2 className="font-heading text-2xl">{stepTitles[step - 1]}</h2>
         </div>
 
         <div className="mb-6 flex gap-2">
@@ -130,7 +132,7 @@ export function BookingFlow({ initialServiceId }: BookingFlowProps) {
             <div
               key={s}
               className={`h-1 flex-1 rounded-full transition-colors ${
-                step >= s ? 'bg-accent neon-shadow-cyan' : 'bg-white/10'
+                step >= s ? 'bg-accent neon-shadow-acid' : 'bg-white/10'
               }`}
             />
           ))}
@@ -144,7 +146,7 @@ export function BookingFlow({ initialServiceId }: BookingFlowProps) {
 
         {step === 1 && (
           <div className="space-y-3">
-            {services.map((s) => (
+            {services.map((s, idx) => (
               <button
                 key={s.id}
                 type="button"
@@ -154,16 +156,25 @@ export function BookingFlow({ initialServiceId }: BookingFlowProps) {
                 }}
                 className={`w-full rounded-xl border p-4 text-left transition-all ${
                   serviceId === s.id
-                    ? 'border-accent bg-accent/10 neon-shadow-cyan'
+                    ? 'border-accent bg-accent/10 neon-shadow-acid'
                     : 'border-white/10 bg-surface hover:border-accent/40'
                 }`}
               >
-                <div className="flex justify-between gap-4">
-                  <span className="font-semibold">{s.name}</span>
-                  <span className="font-mono text-accent">{formatPriceCents(s.priceCents)}</span>
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-start gap-3">
+                    <BarberIcon
+                      icon={resolveBarberIcon(s.name, idx)}
+                      tone={serviceId === s.id ? 'accent' : 'muted'}
+                      size="md"
+                    />
+                    <div>
+                      <span className="font-semibold">{s.name}</span>
+                      {s.description && <p className="mt-1 text-sm text-muted">{s.description}</p>}
+                      <p className="mt-1 font-mono text-xs text-muted">{s.durationMin} min</p>
+                    </div>
+                  </div>
+                  <span className="shrink-0 font-mono text-accent">{formatPriceCents(s.priceCents)}</span>
                 </div>
-                {s.description && <p className="mt-1 text-sm text-muted">{s.description}</p>}
-                <p className="mt-1 font-mono text-xs text-muted">{s.durationMin} min</p>
               </button>
             ))}
           </div>

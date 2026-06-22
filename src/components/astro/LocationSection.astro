@@ -1,4 +1,6 @@
 ---
+import BarberIcon from './BarberIcon.astro';
+
 interface Props {
   address: string;
   mapsUrl?: string | null;
@@ -8,22 +10,15 @@ const { address, mapsUrl } = Astro.props;
 ---
 
 <section id="ubicacion" class="mt-20">
-  <div class="mb-10 text-center">
-    <h2 class="font-display text-3xl tracking-tight md:text-4xl">
+  <div class="mb-8 border-b border-white/5 pb-4">
+    <p class="font-mono text-xs uppercase tracking-widest text-accent">// Dónde encontrarnos</p>
+    <h2 class="font-heading mt-1 text-3xl font-bold uppercase italic md:text-4xl">
       <span class="text-gradient-cyber">Ubicación</span>
     </h2>
-    <p class="mt-2 text-muted">Encuéntranos aquí</p>
   </div>
   <div class="card card-hover mx-auto max-w-2xl text-center">
-    <div class="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full border border-accent/30 bg-accent/10">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path
-          d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"
-          stroke="#00F5D4"
-          stroke-width="1.5"
-          fill="none"></path>
-        <circle cx="12" cy="9" r="2.5" stroke="#00F5D4" stroke-width="1.5"></circle>
-      </svg>
+    <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded border border-accent/30 bg-accent/10">
+      <BarberIcon icon="scissors" tone="accent" size="lg" label="Ubicación" />
     </div>
     <p class="text-lg">{address}</p>
     {

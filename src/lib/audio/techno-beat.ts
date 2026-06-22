@@ -16,6 +16,29 @@ function getAudioContextCtor(): AudioContextCtor | null {
   return window.AudioContext ?? w.webkitAudioContext ?? null;
 }
 
+const VOLUME_STORAGE_KEY = 'picard-barber-master-volume';
+const DEFAULT_MASTER_VOLUME = 0.65;
+
+function clampVolume(value: number): number {
+  return Math.min(1, Math.max(0, value));
+}
+
+function readStoredVolume(): number {
+  if (typeof localStorage === 'undefined') return DEFAULT_MASTER_VOLUME;
+  const raw = localStorage.getItem(VOLUME_STORAGE_KEY);
+  if (raw === null) return DEFAULT_MASTER_VOLUME;
+  const parsed = Number.parseFloat(raw);
+  return Number.isFinite(parsed) ? clampVolume(parsed) : DEFAULT_MASTER_VOLUME;
+}
+
+function writeStoredVolume(value: number): void {
+  try {
+    localStorage.setItem(VOLUME_STORAGE_KEY, String(value));
+  } catch {
+    // ignore quota / private mode
+  }
+}
+
 export class TechnoBeatEngine {
   private ctx: AudioContext | null = null;
   private masterGain: GainNode | null = null;
@@ -24,6 +47,7 @@ export class TechnoBeatEngine {
   private analyser: AnalyserNode | null = null;
   private noiseBuffer: AudioBuffer | null = null;
   private preset: BeatPreset;
+  private volume = readStoredVolume();
   private running = false;
   private beatStep = 0;
   private barIndex = 0;
@@ -57,6 +81,25 @@ export class TechnoBeatEngine {
     return this.analyser;
   }
 
+  getVolume(): number {
+    return this.volume;
+  }
+
+  setVolume(value: number): void {
+    this.volume = clampVolume(value);
+    writeStoredVolume(this.volume);
+    this.applyMasterVolume(this.volume);
+  }
+
+  private applyMasterVolume(value: number): void {
+    if (!this.ctx || !this.masterGain) return;
+    const gain = this.masterGain.gain;
+    const t = this.ctx.currentTime;
+    gain.cancelScheduledValues(t);
+    gain.setValueAtTime(gain.value, t);
+    gain.linearRampToValueAtTime(value, t + 0.06);
+  }
+
   async resume(): Promise<void> {
     const Ctor = getAudioContextCtor();
     if (!Ctor) return;
@@ -66,7 +109,7 @@ export class TechnoBeatEngine {
       this.noiseBuffer = createNoiseBuffer(this.ctx);
 
       this.masterGain = this.ctx.createGain();
-      this.masterGain.gain.value = 0.4;
+      this.masterGain.gain.value = this.volume;
 
       this.masterFilter = this.ctx.createBiquadFilter();
       this.masterFilter.type = 'lowpass';
@@ -92,6 +135,7 @@ export class TechnoBeatEngine {
     await this.resume();
     if (!this.ctx || !this.masterGain || !this.noiseBuffer || !this.fxBus || this.running) return;
 
+    this.applyMasterVolume(this.volume);
     this.running = true;
     this.beatStep = 0;
     this.barIndex = 0;

@@ -10,8 +10,9 @@ const serviceId = Astro.url.searchParams.get('serviceId') ?? undefined;
 ---
 
 <BaseLayout title={`Reservar — ${biz?.name ?? 'Picard Barber'}`}>
-  <div class="mb-10 text-center">
-    <h1 class="font-display text-4xl tracking-tight md:text-5xl">
+  <div class="mb-10 text-center md:text-left">
+    <p class="font-mono text-xs uppercase tracking-widest text-accent">// Reserva online</p>
+    <h1 class="font-heading mt-1 text-4xl font-bold uppercase italic tracking-tight md:text-5xl">
       <span class="text-gradient-cyber">Reserva tu hora</span>
     </h1>
     <p class="mt-2 text-muted">Elige servicio, fecha y confirma en minutos</p>

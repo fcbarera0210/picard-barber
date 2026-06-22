@@ -1,0 +1,29 @@
+---
+import type { BarberIconName, BarberIconTone } from '../../lib/barber-icons';
+import { barberIconSrc } from '../../lib/barber-icons';
+
+interface Props {
+  icon: BarberIconName;
+  tone?: BarberIconTone;
+  size?: 'sm' | 'md' | 'lg' | 'xl';
+  class?: string;
+  label?: string;
+}
+
+const { icon, tone = 'accent', size = 'md', class: className = '', label } = Astro.props;
+
+const sizeClass = {
+  sm: 'barber-icon-sm',
+  md: 'barber-icon-md',
+  lg: 'barber-icon-lg',
+  xl: 'barber-icon-xl',
+}[size];
+---
+
+<span
+  class:list={['barber-icon', `barber-icon--${tone}`, sizeClass, className]}
+  style={`--icon-url: url('${barberIconSrc(icon)}')`}
+  role={label ? 'img' : undefined}
+  aria-label={label}
+  aria-hidden={label ? undefined : 'true'}
+></span>
