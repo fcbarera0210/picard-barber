@@ -5,6 +5,8 @@ type TechnoSynthProps = {
   variant?: 'header' | 'compact' | 'menu';
 };
 
+const DEFAULT_VOLUME_PERCENT = 65;
+
 function volumeToPercent(volume: number): number {
   return Math.round(volume * 100);
 }
@@ -16,9 +18,13 @@ function percentToVolume(percent: number): number {
 export function TechnoSynth({ variant = 'header' }: TechnoSynthProps) {
   const [playing, setPlaying] = useState(false);
   const [disabled, setDisabled] = useState(false);
-  const [volume, setVolume] = useState(() => volumeToPercent(getTechnoBeatEngine().getVolume()));
+  const [volume, setVolume] = useState(DEFAULT_VOLUME_PERCENT);
   const [barHeights, setBarHeights] = useState([4, 4, 4, 4, 4]);
   const animRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    setVolume(volumeToPercent(getTechnoBeatEngine().getVolume()));
+  }, []);
 
   useEffect(() => {
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;

@@ -119,7 +119,11 @@ export function BusinessConfig() {
             value={form.mapsUrl ?? ''}
             onChange={(e) => setForm((f) => f && { ...f, mapsUrl: e.target.value })}
             className="input-field"
+            placeholder="https://maps.google.com/... o https://maps.app.goo.gl/..."
           />
+          <p className="mt-1 text-xs text-muted">
+            Acepta enlaces de Google Maps o enlaces cortos (maps.app.goo.gl). Si se configura, el mapa se muestra embebido en el sitio.
+          </p>
         </div>
         <div>
           <label className="mb-1 block text-sm text-muted">Instagram URL</label>

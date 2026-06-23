@@ -7,58 +7,62 @@ type Layer = {
   scrollSpeed: number;
   mouseSpeed?: number;
   pulse?: boolean;
+  float?: boolean;
+  floatClass?: string;
 };
 
 const LAYERS: Layer[] = [
   {
     id: 'waves',
     src: '/svg/waves.svg',
-    className:
-      '-left-[12%] top-[6%] w-[min(72vw,920px)] opacity-[0.32]',
+    className: 'left-0 top-[6%] w-[100vw] opacity-[0.32]',
     scrollSpeed: 0.16,
     mouseSpeed: 0.018,
     pulse: true,
+    float: true,
+    floatClass: 'bg-svg-float--slow',
   },
   {
     id: 'ligth',
     src: '/svg/ligth.svg',
-    className:
-      'left-[4%] top-[18%] w-[min(52vw,640px)] opacity-55',
+    className: 'left-[4%] top-[18%] w-[min(52vw,640px)] opacity-55',
     scrollSpeed: 0.28,
     mouseSpeed: 0.03,
     pulse: true,
+    float: true,
+    floatClass: 'bg-svg-float--delay-1',
   },
   {
     id: 'top-block',
     src: '/svg/top-block.svg',
-    className:
-      '-right-[8%] -top-[6%] w-[min(55vw,700px)] opacity-25',
+    className: '-right-[8%] -top-[6%] w-[min(55vw,700px)] opacity-25',
     scrollSpeed: 0.1,
     mouseSpeed: 0.012,
   },
   {
     id: 'bottom-block',
     src: '/svg/bottom-block.svg',
-    className:
-      '-right-[10%] bottom-[8%] w-[min(50vw,640px)] opacity-20',
+    className: '-right-[10%] bottom-[8%] w-[min(50vw,640px)] opacity-20',
     scrollSpeed: 0.14,
     mouseSpeed: 0.015,
   },
   {
     id: 'top-bar',
     src: '/svg/top-bar.svg',
-    className:
-      'right-[4%] top-[12%] hidden w-32 opacity-40 md:block',
+    className: 'right-[4%] top-[12%] hidden w-32 opacity-40 md:block',
     scrollSpeed: 0.22,
     mouseSpeed: 0.02,
+    float: true,
+    floatClass: 'bg-svg-float--delay-2',
   },
   {
     id: 'bottom-bar',
     src: '/svg/bottom-bar.svg',
-    className:
-      'bottom-[18%] right-[6%] hidden w-28 opacity-35 md:block',
+    className: 'bottom-[18%] right-[6%] hidden w-28 opacity-35 md:block',
     scrollSpeed: 0.2,
     mouseSpeed: 0.018,
+    float: true,
+    floatClass: 'bg-svg-float--delay-3 bg-svg-float--slow',
   },
 ];
 
@@ -152,17 +156,21 @@ export function ParallaxBackground() {
       ))}
 
       {LAYERS.map((layer) => (
-        <img
+        <div
           key={layer.id}
-          data-parallax-layer
-          data-scroll-speed={layer.scrollSpeed}
-          data-mouse-speed={layer.mouseSpeed ?? 0}
-          src={layer.src}
-          alt=""
-          className={`bg-svg-layer will-change-transform ${layer.pulse ? 'bg-svg-pulse' : ''} ${layer.className}`}
-          loading={layer.id === 'waves' || layer.id === 'ligth' ? 'eager' : 'lazy'}
-          decoding="async"
-        />
+          className={`bg-svg-layer-wrap will-change-transform ${layer.float ? `bg-svg-float ${layer.floatClass ?? ''}` : ''} ${layer.className}`}
+        >
+          <img
+            data-parallax-layer
+            data-scroll-speed={layer.scrollSpeed}
+            data-mouse-speed={layer.mouseSpeed ?? 0}
+            src={layer.src}
+            alt=""
+            className={`bg-svg-layer will-change-transform ${layer.pulse ? 'bg-svg-pulse' : ''}`}
+            loading={layer.id === 'waves' || layer.id === 'ligth' ? 'eager' : 'lazy'}
+            decoding="async"
+          />
+        </div>
       ))}
 
       <div className="absolute inset-0 bg-gradient-to-b from-bg/20 via-transparent to-bg/80" />

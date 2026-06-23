@@ -2,8 +2,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Hero from '../components/astro/Hero.astro';
 import ServicesGrid from '../components/astro/ServicesGrid.astro';
-import ScheduleSection from '../components/astro/ScheduleSection.astro';
-import LocationSection from '../components/astro/LocationSection.astro';
+import VisitSection from '../components/astro/VisitSection.astro';
 import CTABanner from '../components/astro/CTABanner.astro';
 import { ScrollReveal } from '../components/react/ScrollReveal';
 import { getActiveBusiness } from '../lib/business';
@@ -48,17 +47,11 @@ const scheduleByDay = DAYS_ORDER.map((day) => ({
 
   <ServicesGrid services={activeServices} />
 
-  <ScrollReveal client:load>
-    <ScheduleSection schedule={scheduleByDay} />
-  </ScrollReveal>
-
-  {
-    biz?.address && (
-      <ScrollReveal client:load>
-        <LocationSection address={biz.address} mapsUrl={biz.mapsUrl} />
-      </ScrollReveal>
-    )
-  }
+  <VisitSection
+    schedule={scheduleByDay}
+    address={biz?.address}
+    mapsUrl={biz?.mapsUrl}
+  />
 
   <ScrollReveal client:load>
     <CTABanner />

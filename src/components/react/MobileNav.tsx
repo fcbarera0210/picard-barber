@@ -20,10 +20,7 @@ export function MobileNav() {
             Servicios
           </a>
           <a href="/#horarios" className="block px-4 py-2.5 text-sm text-muted hover:text-accent">
-            Horarios
-          </a>
-          <a href="/#ubicacion" className="block px-4 py-2.5 text-sm text-muted hover:text-accent">
-            Ubicación
+            Horarios y ubicación
           </a>
           <a href="/mis-reservas" className="block px-4 py-2.5 text-sm text-muted hover:text-accent">
             Mis reservas

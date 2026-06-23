@@ -7,21 +7,21 @@ interface Props {
 const { description } = Astro.props;
 ---
 
-<section class="relative overflow-hidden py-12 text-right md:py-20">
-  <div
-    class="pointer-events-none absolute -right-[15%] top-1/2 z-0 h-[min(90vw,520px)] w-[min(90vw,520px)] -translate-y-1/2 rounded-full border border-white/10 opacity-40"
-    aria-hidden="true"
-  ></div>
-  <div
-    class="pointer-events-none absolute -right-[20%] top-1/2 z-0 h-[min(100vw,600px)] w-[min(100vw,600px)] -translate-y-1/2 rounded-full border border-dashed border-accent/30 opacity-30"
-    aria-hidden="true"
-  ></div>
+<section class="relative py-12 text-right md:py-20">
+  <div class="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
+    <div
+      class="absolute -right-[15%] top-1/2 h-[min(90vw,520px)] w-[min(90vw,520px)] -translate-y-1/2 rounded-full border border-white/10 opacity-40"
+    ></div>
+    <div
+      class="absolute -right-[20%] top-1/2 h-[min(100vw,600px)] w-[min(100vw,600px)] -translate-y-1/2 rounded-full border border-dashed border-accent/30 opacity-30"
+    ></div>
+  </div>
 
-  <div class="relative z-10 ml-auto max-w-3xl">
+  <div class="relative z-10 ml-auto max-w-3xl pr-4 sm:pr-6 md:pr-8">
     <div class="space-y-6">
       <div class="space-y-2">
         <p class="font-mono text-xs uppercase tracking-[0.25em] text-accent">// Barbería premium & estilo</p>
-        <h1 class="font-heading text-right text-5xl font-bold uppercase italic leading-[0.95] tracking-tight sm:text-6xl md:text-7xl lg:text-8xl">
+        <h1 class="hero-title font-heading text-right text-5xl font-bold uppercase italic leading-[0.95] tracking-tight sm:text-6xl md:text-7xl lg:text-8xl">
           <span class="block text-white neon-text-acid sm:inline">Picard</span>
           <span class="text-gradient-cyber block sm:inline">Barber</span>
         </h1>
