@@ -30,6 +30,8 @@ export const business = pgTable('business', {
   address: text('address'),
   phone: text('phone'),
   whatsappNumber: text('whatsapp_number'),
+  whatsappMessageTemplate: text('whatsapp_message_template'),
+  whatsappClientMessageTemplate: text('whatsapp_client_message_template'),
   mapsUrl: text('maps_url'),
   instagramUrl: text('instagram_url'),
   minAdvanceHours: integer('min_advance_hours').notNull().default(2),
@@ -49,6 +51,7 @@ export const services = pgTable('services', {
   priceCents: integer('price_cents').notNull().default(0),
   active: boolean('active').notNull().default(true),
   sortOrder: integer('sort_order').notNull().default(0),
+  icon: text('icon'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });

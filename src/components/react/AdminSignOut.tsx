@@ -1,26 +1,31 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { toast } from '../../lib/toast';
+import { signOutAdmin } from '../../lib/auth-client';
 
 export function AdminSignOut() {
-  const [csrfToken, setCsrfToken] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    fetch('/api/auth/csrf', { credentials: 'same-origin' })
-      .then((res) => res.json())
-      .then((data) => setCsrfToken(data.csrfToken ?? ''))
-      .catch(() => {});
-  }, []);
+  async function handleSignOut() {
+    if (loading) return;
+    setLoading(true);
+    try {
+      await signOutAdmin();
+      toast.success('Sesión cerrada');
+      window.location.href = '/admin/login';
+    } catch {
+      toast.error('No se pudo cerrar sesión. Intenta de nuevo.');
+      setLoading(false);
+    }
+  }
 
   return (
-    <form method="post" action="/api/auth/signout">
-      {csrfToken && <input type="hidden" name="csrfToken" value={csrfToken} />}
-      <input type="hidden" name="callbackUrl" value="/admin/login" />
-      <button
-        type="submit"
-        disabled={!csrfToken}
-        className="admin-nav-link text-danger disabled:opacity-50"
-      >
-        Salir
-      </button>
-    </form>
+    <button
+      type="button"
+      onClick={handleSignOut}
+      disabled={loading}
+      className="admin-nav-link text-danger disabled:opacity-50"
+    >
+      {loading ? 'Saliendo...' : 'Salir'}
+    </button>
   );
 }

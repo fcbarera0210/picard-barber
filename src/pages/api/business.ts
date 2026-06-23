@@ -22,6 +22,8 @@ export const GET: APIRoute = async () => {
         address: biz.address,
         phone: biz.phone,
         whatsappNumber: biz.whatsappNumber,
+        whatsappMessageTemplate: biz.whatsappMessageTemplate,
+        whatsappClientMessageTemplate: biz.whatsappClientMessageTemplate,
         mapsUrl: biz.mapsUrl,
         instagramUrl: biz.instagramUrl,
         minAdvanceHours: biz.minAdvanceHours,
@@ -57,6 +59,10 @@ export const PATCH: APIRoute = async (context) => {
   if (typeof body.phone === 'string') updates.phone = body.phone.trim() || null;
   if (typeof body.whatsappNumber === 'string')
     updates.whatsappNumber = body.whatsappNumber.trim() || null;
+  if (typeof body.whatsappMessageTemplate === 'string')
+    updates.whatsappMessageTemplate = body.whatsappMessageTemplate.trim() || null;
+  if (typeof body.whatsappClientMessageTemplate === 'string')
+    updates.whatsappClientMessageTemplate = body.whatsappClientMessageTemplate.trim() || null;
   if (typeof body.mapsUrl === 'string') updates.mapsUrl = body.mapsUrl.trim() || null;
   if (typeof body.instagramUrl === 'string')
     updates.instagramUrl = body.instagramUrl.trim() || null;

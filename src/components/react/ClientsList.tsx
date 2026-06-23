@@ -1,5 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { formatDateTimeChile } from '../../lib/datetime';
 import { formatPhoneDisplay } from '../../lib/phone';
+import {
+  buildClientWhatsAppMessage,
+  openWhatsAppUrl,
+} from '../../lib/whatsapp';
 
 type ClientRow = {
   id: string;
@@ -9,20 +14,113 @@ type ClientRow = {
   totalBookings: number;
   lastBookingAt: string | null;
   confirmedCount: number;
+  cancelledCount: number;
 };
+
+type ClientBooking = {
+  id: string;
+  startAt: string;
+  endAt: string;
+  status: string;
+  serviceName: string;
+  serviceDuration: number;
+  priceCents: number;
+};
+
+type ClientDetail = {
+  client: {
+    id: string;
+    name: string;
+    email: string;
+    phone: string;
+    createdAt: string;
+  };
+  stats: {
+    totalBookings: number;
+    confirmedCount: number;
+    cancelledCount: number;
+    lastBookingAt: string | null;
+    firstBookingAt: string | null;
+  };
+  bookings: ClientBooking[];
+};
+
+function formatPrice(cents: number): string {
+  if (cents <= 0) return '—';
+  return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(cents);
+}
 
 export function ClientsList() {
   const [clients, setClients] = useState<ClientRow[]>([]);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [detail, setDetail] = useState<ClientDetail | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [businessName, setBusinessName] = useState('');
+  const [whatsappClientTemplate, setWhatsappClientTemplate] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch('/api/clients')
-      .then((r) => r.json())
-      .then((d) => {
-        setClients(d.clients ?? []);
+    Promise.all([fetch('/api/clients'), fetch('/api/business')])
+      .then(async ([clientsRes, bizRes]) => {
+        const clientsData = await clientsRes.json();
+        const bizData = await bizRes.json();
+        const list: ClientRow[] = clientsData.clients ?? [];
+        setClients(list);
+        setBusinessName(bizData.business?.name ?? '');
+        setWhatsappClientTemplate(bizData.business?.whatsappClientMessageTemplate ?? null);
+        if (list.length > 0) setSelectedId(list[0].id);
         setLoading(false);
-      });
+      })
+      .catch(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    if (!selectedId) {
+      setDetail(null);
+      return;
+    }
+
+    let cancelled = false;
+    setDetailLoading(true);
+
+    fetch(`/api/clients/${selectedId}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (!cancelled) setDetail(data);
+      })
+      .catch(() => {
+        if (!cancelled) setDetail(null);
+      })
+      .finally(() => {
+        if (!cancelled) setDetailLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedId]);
+
+  const filteredClients = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return clients;
+    return clients.filter(
+      (c) =>
+        c.name.toLowerCase().includes(q) ||
+        c.email.toLowerCase().includes(q) ||
+        c.phone.includes(q),
+    );
+  }, [clients, search]);
+
+  function handleWhatsAppClient() {
+    if (!detail) return;
+    const message = buildClientWhatsAppMessage({
+      clientName: detail.client.name,
+      businessName,
+      template: whatsappClientTemplate,
+    });
+    openWhatsAppUrl(detail.client.phone, message);
+  }
 
   if (loading) return <p className="text-muted">Cargando clientes...</p>;
 
@@ -31,33 +129,142 @@ export function ClientsList() {
   }
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-left text-sm">
-        <thead>
-          <tr className="border-b border-border text-muted">
-            <th className="pb-3 pr-4">Nombre</th>
-            <th className="pb-3 pr-4">Email</th>
-            <th className="pb-3 pr-4">Teléfono</th>
-            <th className="pb-3 pr-4">Citas</th>
-            <th className="pb-3">Última visita</th>
-          </tr>
-        </thead>
-        <tbody>
-          {clients.map((c) => (
-            <tr key={c.id} className="border-b border-border/50">
-              <td className="py-3 pr-4 font-medium">{c.name}</td>
-              <td className="py-3 pr-4 text-muted">{c.email}</td>
-              <td className="py-3 pr-4">{formatPhoneDisplay(c.phone)}</td>
-              <td className="py-3 pr-4">{c.totalBookings}</td>
-              <td className="py-3 text-muted">
-                {c.lastBookingAt
-                  ? new Date(c.lastBookingAt).toLocaleDateString('es-CL')
-                  : '—'}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div className="space-y-4">
+      <input
+        type="search"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        placeholder="Buscar por nombre, email o teléfono..."
+        className="input-field max-w-md"
+      />
+
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
+        {/* Lista */}
+        <div className="card max-h-[70vh] space-y-2 overflow-y-auto p-3">
+          <p className="px-2 text-xs font-mono uppercase tracking-wider text-muted">
+            {filteredClients.length} cliente{filteredClients.length !== 1 ? 's' : ''}
+          </p>
+          {filteredClients.length === 0 ? (
+            <p className="px-2 py-4 text-sm text-muted">Sin resultados.</p>
+          ) : (
+            filteredClients.map((client) => {
+              const isSelected = selectedId === client.id;
+              return (
+                <button
+                  key={client.id}
+                  type="button"
+                  onClick={() => setSelectedId(client.id)}
+                  className={`client-list-item w-full rounded border p-3 text-left transition ${
+                    isSelected ? 'client-list-item-active' : 'border-border hover:border-accent/40'
+                  }`}
+                >
+                  <p className="font-medium">{client.name}</p>
+                  <p className="text-xs text-muted">{client.email}</p>
+                  <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-muted">
+                    <span>{client.totalBookings} citas</span>
+                    <span>·</span>
+                    <span>{client.confirmedCount} confirmadas</span>
+                    {client.lastBookingAt && (
+                      <>
+                        <span>·</span>
+                        <span>
+                          Última: {new Date(client.lastBookingAt).toLocaleDateString('es-CL')}
+                        </span>
+                      </>
+                    )}
+                  </div>
+                </button>
+              );
+            })
+          )}
+        </div>
+
+        {/* Detalle */}
+        <div className="card min-h-[320px]">
+          {detailLoading ? (
+            <p className="text-muted">Cargando detalle...</p>
+          ) : !detail ? (
+            <p className="text-muted">Selecciona un cliente para ver su información.</p>
+          ) : (
+            <div className="space-y-6">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                  <h2 className="font-heading text-xl font-bold">{detail.client.name}</h2>
+                  <p className="text-sm text-muted">Cliente desde {new Date(detail.client.createdAt).toLocaleDateString('es-CL')}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleWhatsAppClient}
+                  className="inline-flex items-center gap-2 rounded-lg bg-whatsapp px-4 py-2 text-sm font-medium text-white transition hover:brightness-110"
+                >
+                  WhatsApp
+                </button>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="client-detail-field rounded border border-border p-3">
+                  <p className="text-xs font-mono uppercase tracking-wider text-muted">Email</p>
+                  <a href={`mailto:${detail.client.email}`} className="text-sm text-accent hover:underline">
+                    {detail.client.email}
+                  </a>
+                </div>
+                <div className="client-detail-field rounded border border-border p-3">
+                  <p className="text-xs font-mono uppercase tracking-wider text-muted">Teléfono</p>
+                  <p className="text-sm">{formatPhoneDisplay(detail.client.phone)}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2">
+                <div className="client-stat rounded border border-border p-3 text-center">
+                  <p className="font-heading text-2xl text-accent">{detail.stats.totalBookings}</p>
+                  <p className="text-xs text-muted">Total citas</p>
+                </div>
+                <div className="client-stat rounded border border-border p-3 text-center">
+                  <p className="font-heading text-2xl text-accent">{detail.stats.confirmedCount}</p>
+                  <p className="text-xs text-muted">Confirmadas</p>
+                </div>
+                <div className="client-stat rounded border border-border p-3 text-center">
+                  <p className="font-heading text-2xl text-danger">{detail.stats.cancelledCount}</p>
+                  <p className="text-xs text-muted">Canceladas</p>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="font-heading mb-3 font-bold">Historial de citas</h3>
+                {detail.bookings.length === 0 ? (
+                  <p className="text-sm text-muted">Sin citas registradas.</p>
+                ) : (
+                  <div className="max-h-[280px] space-y-2 overflow-y-auto pr-1">
+                    {detail.bookings.map((booking) => (
+                      <div
+                        key={booking.id}
+                        className="client-booking-row flex flex-wrap items-center justify-between gap-3 rounded border border-border p-3"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium">{booking.serviceName}</p>
+                          <p className="text-sm text-muted">
+                            {formatDateTimeChile(new Date(booking.startAt))} · {booking.serviceDuration} min
+                          </p>
+                          <p className="text-xs text-muted">{formatPrice(booking.priceCents)}</p>
+                        </div>
+                        <span
+                          className={
+                            booking.status === 'confirmed'
+                              ? 'status-confirmed text-xs'
+                              : 'status-cancelled text-xs'
+                          }
+                        >
+                          {booking.status === 'confirmed' ? 'Confirmada' : 'Cancelada'}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

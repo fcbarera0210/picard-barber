@@ -46,9 +46,7 @@ const scheduleByDay = DAYS_ORDER.map((day) => ({
     description={biz?.description ?? 'Cortes clásicos y modernos. Reserva tu hora en segundos.'}
   />
 
-  <ScrollReveal client:load>
-    <ServicesGrid services={activeServices} />
-  </ScrollReveal>
+  <ServicesGrid services={activeServices} />
 
   <ScrollReveal client:load>
     <ScheduleSection schedule={scheduleByDay} />

@@ -1,6 +1,8 @@
 ---
 import '../../styles/global.css';
 import { AdminLoginForm } from '../../components/react/AdminLoginForm';
+import { ParallaxBackground } from '../../components/react/ParallaxBackground';
+import { ToastHost } from '../../components/react/ToastHost';
 
 export const prerender = false;
 
@@ -8,7 +10,7 @@ const authError = Astro.url.searchParams.get('error');
 ---
 
 <!doctype html>
-<html lang="es">
+<html lang="es" class="min-h-dvh">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -16,12 +18,16 @@ const authError = Astro.url.searchParams.get('error');
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Montserrat:wght@700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Montserrat:ital,wght@0,700;0,800;1,700;1,800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap"
       rel="stylesheet"
     />
     <title>Admin — Picard Barber</title>
   </head>
-  <body class="flex min-h-screen items-center justify-center bg-bg px-4">
-    <AdminLoginForm client:load authError={authError} />
+  <body class="relative min-h-dvh overflow-x-hidden bg-bg text-ink">
+    <ParallaxBackground client:load />
+    <main class="relative z-10 flex min-h-dvh items-center justify-center px-4">
+      <AdminLoginForm client:load authError={authError} />
+    </main>
+    <ToastHost client:load />
   </body>
 </html>

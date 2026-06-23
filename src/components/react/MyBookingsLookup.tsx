@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { formatDateTimeChile } from '../../lib/datetime';
+import { toast } from '../../lib/toast';
 
 type Booking = {
   id: string;
@@ -30,14 +31,12 @@ function TicketCard({
 export function MyBookingsLookup() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
   const [clientName, setClientName] = useState('');
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [searched, setSearched] = useState(false);
 
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault();
-    setError('');
     setLoading(true);
     setSearched(false);
     try {
@@ -48,14 +47,19 @@ export function MyBookingsLookup() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error ?? 'Error al buscar');
+        toast.error(data.error ?? 'Error al buscar reservas');
         return;
       }
       setClientName(data.client?.name ?? '');
       setBookings(data.bookings ?? []);
       setSearched(true);
+      if ((data.bookings ?? []).length === 0) {
+        toast.info('No hay reservas con este email');
+      } else {
+        toast.success('Reservas cargadas correctamente');
+      }
     } catch {
-      setError('Error de conexión');
+      toast.error('Error de conexión. Intenta de nuevo.');
     } finally {
       setLoading(false);
     }
@@ -75,11 +79,6 @@ export function MyBookingsLookup() {
           <span className="text-gradient-cyber">Mis reservas</span>
         </h2>
         <p className="text-sm text-muted">Ingresa tu email para ver tu historial de citas.</p>
-        {error && (
-          <p className="rounded-lg border border-danger/30 bg-danger/10 px-3 py-2 text-sm text-danger">
-            {error}
-          </p>
-        )}
         <div>
           <label className="mb-1 block font-mono text-xs uppercase text-muted" htmlFor="lookup-email">
             Email

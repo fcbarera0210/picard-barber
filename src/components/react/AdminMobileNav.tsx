@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { TechnoSynth } from './TechnoSynth';
 
 const links = [
   { href: '/admin', label: 'Dashboard' },
@@ -51,18 +52,25 @@ export function AdminMobileNav({ pathname }: AdminMobileNavProps) {
   }, [open]);
 
   return (
-    <div ref={rootRef} className="relative sm:hidden">
+    <div ref={rootRef} className="relative lg:hidden">
       <button
         type="button"
-        className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-surface-light"
+        className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 bg-surface text-accent"
         aria-expanded={open}
         aria-label={open ? 'Cerrar menú' : 'Abrir menú'}
         onClick={() => setOpen((v) => !v)}
       >
-        {open ? '✕' : '☰'}
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path
+            d="M4 7h16M4 12h16M4 17h16"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+          />
+        </svg>
       </button>
       {open && (
-        <div className="absolute top-[calc(100%+0.5rem)] right-0 z-50 min-w-[12rem] rounded-xl border border-border bg-surface py-2 shadow-lg">
+        <div className="absolute top-[calc(100%+0.5rem)] right-0 z-50 w-[min(18rem,calc(100vw-2rem))] rounded-xl border border-white/10 bg-surface/95 py-2 shadow-lg backdrop-blur-md">
           {links.map((link) => (
             <a
               key={link.href}
@@ -79,7 +87,13 @@ export function AdminMobileNav({ pathname }: AdminMobileNavProps) {
               {link.label}
             </a>
           ))}
-          <form method="post" action="/api/auth/signout" className="border-t border-border px-1 pt-1">
+
+          <div className="mt-2 border-t border-white/10 px-3 py-3">
+            <p className="mb-2 font-mono text-[10px] uppercase tracking-widest text-muted">// Audio</p>
+            <TechnoSynth variant="menu" />
+          </div>
+
+          <form method="post" action="/api/auth/signout" className="border-t border-white/10 px-1 pt-1">
             {csrfToken && <input type="hidden" name="csrfToken" value={csrfToken} />}
             <input type="hidden" name="callbackUrl" value="/admin/login" />
             <button

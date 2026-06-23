@@ -1,0 +1,14 @@
+---
+interface Props {
+  title: string;
+}
+
+const { title } = Astro.props;
+---
+
+<div class="mb-8 border-b border-white/5 pb-4">
+  <p class="font-mono text-xs uppercase tracking-widest text-accent">// Panel admin</p>
+  <h1 class="font-heading mt-1 text-3xl font-bold uppercase italic md:text-4xl">
+    <span class="text-gradient-cyber">{title}</span>
+  </h1>
+</div>

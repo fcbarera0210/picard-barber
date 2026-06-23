@@ -1,0 +1,11 @@
+HTTP/1.1 302 Found
+Access-Control-Allow-Origin: http://localhost:4321
+Vary: Origin
+location: http://localhost:4321/admin
+set-cookie: authjs.callback-url=http%3A%2F%2Flocalhost%3A4321%2Fadmin; Path=/; HttpOnly; SameSite=Lax
+set-cookie: authjs.session-token=eyJhbGciOiJkaXIiLCJlbmMiOiJBMjU2Q0JDLUhTNTEyIiwia2lkIjoiRFY1MXh1YWpXUFBkd1ZNNlZybVBFRlR0TFY0aDVZMjZTNnNYVXRldnFLTk80MmUxT21qMmxrS3RxQ0pRT1dFNWZVY043QnhoOGNZMU5ubDJpcjhobUEifQ..9MFvKskGd8nJpSK2ruIYwA.5Q8ryztYfCsK0UXdcPb_SeH_H3mU4AX_ipY04gzBaour7kXCC59L3tIV34TOKqO9qIEHGgcFR_mHqb_SrLV25ob9ihd43zV2JH0ystsWllElbUi0kMs_IDSEN2fUh-eptv6OWKXhqhKwe8xBruzslasJH1ybgjqR3IOvwAKMxIFZHwQ9PzxH3gHrbWIT4sK_IzmbTYg32yKB1v9wj0dd4vd_CZMsc3OPgRtDtzuPWIfHKP2QCdVS59AHYhENfceP.vHs8SipYx1bLfXgBcRT5NFwOUHSL5FOyXhgIs7KPOkY; Path=/; Expires=Tue, 30 Jun 2026 03:05:26 GMT; HttpOnly; SameSite=Lax
+Date: Tue, 23 Jun 2026 03:05:26 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+Transfer-Encoding: chunked
+

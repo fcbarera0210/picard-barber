@@ -1,7 +1,8 @@
 ---
 import { formatPriceCents } from '../../lib/format';
-import { resolveBarberIcon } from '../../lib/barber-icons';
+import { serviceBarberIcon } from '../../lib/barber-icons';
 import BarberIcon from './BarberIcon.astro';
+import { ScrollReveal } from '../react/ScrollReveal';
 
 type Service = {
   id: string;
@@ -9,6 +10,7 @@ type Service = {
   description: string | null;
   durationMin: number;
   priceCents: number;
+  icon?: string | null;
 };
 
 interface Props {
@@ -28,38 +30,41 @@ const { services } = Astro.props;
     </div>
     <p class="font-mono text-[11px] uppercase tracking-widest text-muted">// Elige tu preset</p>
   </div>
-  {
-    services.length === 0 ? (
-      <p class="text-muted">Próximamente nuevos servicios.</p>
-    ) : (
-      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {services.map((s, idx) => {
-          const icon = resolveBarberIcon(s.name, idx);
-          return (
-            <article class="card card-hover service-card-laser group relative flex flex-col overflow-hidden">
-              <span class="absolute right-3 top-3 font-mono text-[10px] text-muted group-hover:text-accent">
-                [0{idx + 1}]
-              </span>
-              <div class="mb-4 flex h-12 w-12 items-center justify-center rounded border border-white/10 bg-surface-light transition-colors group-hover:border-accent/40 group-hover:bg-accent/10">
-                <BarberIcon icon={icon} tone="muted" size="lg" label={s.name} />
-              </div>
-              <h3 class="font-heading pr-10 text-lg font-bold uppercase italic text-white group-hover:text-accent">
-                {s.name}
-              </h3>
-              {s.description && <p class="mt-2 flex-1 text-sm text-muted">{s.description}</p>}
-              <div class="mt-4 flex items-center justify-between border-t border-white/5 pt-4">
-                <span class="font-mono text-sm text-white">{formatPriceCents(s.priceCents)}</span>
-                <span class="font-mono text-[10px] text-accent">{s.durationMin} MIN //</span>
-              </div>
-              <a href={`/reservar?serviceId=${s.id}`} class="btn-primary mt-4 text-center text-xs">
-                Reservar
-              </a>
-            </article>
-          );
-        })}
-      </div>
-    )
-  }
+
+  <ScrollReveal client:load>
+    {
+      services.length === 0 ? (
+        <p class="text-muted">Próximamente nuevos servicios.</p>
+      ) : (
+        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {services.map((s, idx) => {
+            const icon = serviceBarberIcon(s.icon, s.name, idx);
+            return (
+              <article class="card card-hover service-card-laser group relative flex flex-col overflow-hidden">
+                <span class="absolute right-3 top-3 font-mono text-[10px] text-muted group-hover:text-accent">
+                  [0{idx + 1}]
+                </span>
+                <div class="mb-4 flex h-12 w-12 items-center justify-center rounded border border-white/10 bg-surface-light transition-colors group-hover:border-accent/40 group-hover:bg-accent/10">
+                  <BarberIcon icon={icon} tone="muted" size="lg" label={s.name} />
+                </div>
+                <h3 class="font-heading pr-10 text-lg font-bold uppercase italic text-white group-hover:text-accent">
+                  {s.name}
+                </h3>
+                {s.description && <p class="mt-2 flex-1 text-sm text-muted">{s.description}</p>}
+                <div class="mt-4 flex items-center justify-between border-t border-white/5 pt-4">
+                  <span class="font-mono text-sm text-white">{formatPriceCents(s.priceCents)}</span>
+                  <span class="font-mono text-[10px] text-accent">{s.durationMin} MIN //</span>
+                </div>
+                <a href={`/reservar?serviceId=${s.id}`} class="btn-primary mt-4 text-center text-xs">
+                  Reservar
+                </a>
+              </article>
+            );
+          })}
+        </div>
+      )
+    }
+  </ScrollReveal>
 </section>
 
 <style>

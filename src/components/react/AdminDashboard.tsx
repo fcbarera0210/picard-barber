@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { formatDateTimeChile } from '../../lib/datetime';
+import { ReservationsCalendar } from './ReservationsCalendar';
 
 type Booking = {
   id: string;
@@ -46,37 +46,20 @@ export function AdminDashboard() {
     <div className="space-y-8">
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="card text-center">
-          <p className="font-display text-4xl text-accent">{todayBookings.length}</p>
+          <p className="font-heading text-4xl text-accent">{todayBookings.length}</p>
           <p className="text-sm text-muted">Citas hoy</p>
         </div>
         <div className="card text-center">
-          <p className="font-display text-4xl text-accent">{upcoming.length}</p>
+          <p className="font-heading text-4xl text-accent">{upcoming.length}</p>
           <p className="text-sm text-muted">Próximas 48h</p>
         </div>
         <div className="card text-center">
-          <p className="font-display text-4xl text-accent">{clientCount}</p>
+          <p className="font-heading text-4xl text-accent">{clientCount}</p>
           <p className="text-sm text-muted">Clientes</p>
         </div>
       </div>
 
-      <section>
-        <h2 className="font-display mb-4 text-xl">Citas de hoy</h2>
-        {todayBookings.length === 0 ? (
-          <p className="text-muted">No hay citas confirmadas hoy.</p>
-        ) : (
-          <ul className="space-y-2">
-            {todayBookings.map((b) => (
-              <li key={b.id} className="card flex justify-between gap-4">
-                <div>
-                  <p className="font-medium">{b.clientName}</p>
-                  <p className="text-sm text-muted">{b.serviceName}</p>
-                </div>
-                <p className="text-sm">{formatDateTimeChile(new Date(b.startAt))}</p>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+      <ReservationsCalendar compact defaultView="week" title="Reservas" />
 
       <div className="flex flex-wrap gap-3">
         <a href="/admin/agenda" className="btn-primary">

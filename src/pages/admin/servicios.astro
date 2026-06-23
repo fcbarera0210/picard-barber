@@ -1,9 +1,10 @@
 ---
 import AdminLayout from '../../layouts/AdminLayout.astro';
+import AdminPageHeader from '../../components/astro/AdminPageHeader.astro';
 import { ServicesManager } from '../../components/react/ServicesManager';
 ---
 
 <AdminLayout>
-  <h1 class="font-display mb-8 text-3xl text-accent">Servicios</h1>
+  <AdminPageHeader title="Servicios" />
   <ServicesManager client:load />
 </AdminLayout>

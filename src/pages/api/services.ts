@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { asc, eq } from 'drizzle-orm';
 import { requireAdmin } from '../../lib/admin-auth';
+import { isBarberIcon } from '../../lib/barber-icons';
 import { getActiveBusiness } from '../../lib/business';
 import { db } from '../../lib/db';
 import { services } from '../../lib/db/schema';
@@ -49,6 +50,7 @@ export const POST: APIRoute = async (context) => {
     priceCents?: number;
     active?: boolean;
     sortOrder?: number;
+    icon?: string | null;
   };
 
   try {
@@ -61,6 +63,10 @@ export const POST: APIRoute = async (context) => {
     return new Response(JSON.stringify({ error: 'Nombre y duración requeridos' }), { status: 400 });
   }
 
+  if (body.icon !== undefined && body.icon !== null && !isBarberIcon(body.icon)) {
+    return new Response(JSON.stringify({ error: 'Icono inválido' }), { status: 400 });
+  }
+
   const [created] = await db
     .insert(services)
     .values({
@@ -71,6 +77,7 @@ export const POST: APIRoute = async (context) => {
       priceCents: body.priceCents ?? 0,
       active: body.active ?? true,
       sortOrder: body.sortOrder ?? 0,
+      icon: body.icon && isBarberIcon(body.icon) ? body.icon : null,
     })
     .returning();
 
@@ -98,6 +105,7 @@ export const PATCH: APIRoute = async (context) => {
     priceCents?: number;
     active?: boolean;
     sortOrder?: number;
+    icon?: string | null;
   };
 
   try {
@@ -110,6 +118,18 @@ export const PATCH: APIRoute = async (context) => {
     return new Response(JSON.stringify({ error: 'ID requerido' }), { status: 400 });
   }
 
+  if (body.icon !== undefined && body.icon !== null && !isBarberIcon(body.icon)) {
+    return new Response(JSON.stringify({ error: 'Icono inválido' }), { status: 400 });
+  }
+
+  if (body.name !== undefined && !body.name.trim()) {
+    return new Response(JSON.stringify({ error: 'Nombre requerido' }), { status: 400 });
+  }
+
+  if (body.durationMin !== undefined && body.durationMin < 5) {
+    return new Response(JSON.stringify({ error: 'Duración mínima de 5 minutos' }), { status: 400 });
+  }
+
   const updates: Partial<typeof services.$inferInsert> = { updatedAt: new Date() };
   if (body.name !== undefined) updates.name = body.name.trim();
   if (body.description !== undefined) updates.description = body.description?.trim() || null;
@@ -117,6 +137,7 @@ export const PATCH: APIRoute = async (context) => {
   if (body.priceCents !== undefined) updates.priceCents = body.priceCents;
   if (body.active !== undefined) updates.active = body.active;
   if (body.sortOrder !== undefined) updates.sortOrder = body.sortOrder;
+  if (body.icon !== undefined) updates.icon = body.icon && isBarberIcon(body.icon) ? body.icon : null;
 
   const [updated] = await db
     .update(services)

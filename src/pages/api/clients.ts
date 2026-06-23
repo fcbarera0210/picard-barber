@@ -25,6 +25,7 @@ export const GET: APIRoute = async (context) => {
       totalBookings: sql<number>`count(${bookings.id})::int`,
       lastBookingAt: sql<Date | null>`max(${bookings.startAt})`,
       confirmedCount: sql<number>`count(case when ${bookings.status} = 'confirmed' then 1 end)::int`,
+      cancelledCount: sql<number>`count(case when ${bookings.status} = 'cancelled' then 1 end)::int`,
     })
     .from(clients)
     .innerJoin(bookings, eq(bookings.clientId, clients.id))

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { formatPriceCents } from '../../lib/format';
-import { resolveBarberIcon } from '../../lib/barber-icons';
+import { serviceBarberIcon } from '../../lib/barber-icons';
+import { toast } from '../../lib/toast';
 import { BarberIcon } from './BarberIcon';
 import { BookingTicketPreview } from './BookingTicketPreview';
 
@@ -10,6 +11,7 @@ type Service = {
   description: string | null;
   durationMin: number;
   priceCents: number;
+  icon?: string | null;
 };
 
 type BookingFlowProps = {
@@ -29,7 +31,6 @@ export function BookingFlow({ initialServiceId }: BookingFlowProps) {
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
   const selectedService = services.find((s) => s.id === serviceId);
@@ -53,8 +54,17 @@ export function BookingFlow({ initialServiceId }: BookingFlowProps) {
     setDate('');
     fetch(`/api/slots?serviceId=${serviceId}`)
       .then((r) => r.json())
-      .then((d) => setAvailableDates(d.dates ?? []))
-      .catch(() => setAvailableDates([]))
+      .then((d) => {
+        const dates = d.dates ?? [];
+        setAvailableDates(dates);
+        if (dates.length === 0) {
+          toast.info('No hay fechas disponibles para este servicio');
+        }
+      })
+      .catch(() => {
+        setAvailableDates([]);
+        toast.error('No se pudieron cargar las fechas disponibles');
+      })
       .finally(() => setDatesLoading(false));
   }, [serviceId]);
 
@@ -65,13 +75,22 @@ export function BookingFlow({ initialServiceId }: BookingFlowProps) {
     setTime('');
     fetch(`/api/slots?date=${date}&serviceId=${serviceId}`)
       .then((r) => r.json())
-      .then((d) => setSlots(d.slots ?? []))
+      .then((d) => {
+        const nextSlots = d.slots ?? [];
+        setSlots(nextSlots);
+        if (nextSlots.length === 0) {
+          toast.info('No hay horarios disponibles para este día');
+        }
+      })
+      .catch(() => {
+        setSlots([]);
+        toast.error('No se pudieron cargar los horarios');
+      })
       .finally(() => setLoading(false));
   }, [serviceId, date]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError('');
     setLoading(true);
     try {
       const res = await fetch('/api/bookings', {
@@ -81,12 +100,13 @@ export function BookingFlow({ initialServiceId }: BookingFlowProps) {
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error ?? 'Error al reservar');
+        toast.error(data.error ?? 'Error al reservar');
         return;
       }
+      toast.success('¡Reserva confirmada! Te esperamos.');
       setSuccess(true);
     } catch {
-      setError('Error de conexión');
+      toast.error('Error de conexión. Intenta de nuevo.');
     } finally {
       setLoading(false);
     }
@@ -138,12 +158,6 @@ export function BookingFlow({ initialServiceId }: BookingFlowProps) {
           ))}
         </div>
 
-        {error && (
-          <p className="mb-4 rounded-lg border border-danger/30 bg-danger/10 px-3 py-2 text-sm text-danger">
-            {error}
-          </p>
-        )}
-
         {step === 1 && (
           <div className="space-y-3">
             {services.map((s, idx) => (
@@ -163,7 +177,7 @@ export function BookingFlow({ initialServiceId }: BookingFlowProps) {
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-3">
                     <BarberIcon
-                      icon={resolveBarberIcon(s.name, idx)}
+                      icon={serviceBarberIcon(s.icon, s.name, idx)}
                       tone={serviceId === s.id ? 'accent' : 'muted'}
                       size="md"
                     />

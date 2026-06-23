@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { DAYS_ORDER, DAY_LABELS } from '../../lib/schedule';
 import { useAsyncAction } from '../../hooks/useAsyncAction';
+import { toast } from '../../lib/toast';
 
 type Block = {
   dayOfWeek: string;
@@ -9,13 +10,32 @@ type Block = {
   active: boolean;
 };
 
+const DAY_SHORT: Record<string, string> = {
+  LUNES: 'Lun',
+  MARTES: 'Mar',
+  MIERCOLES: 'Mié',
+  JUEVES: 'Jue',
+  VIERNES: 'Vie',
+  SABADO: 'Sáb',
+  DOMINGO: 'Dom',
+};
+
 const emptyBlock = (): Block => ({ dayOfWeek: 'LUNES', startTime: '09:00', endTime: '13:00', active: true });
+
+function getDaySummary(blocks: Block[]): string {
+  const dayBlocks = blocks.filter((b) => b.active);
+  if (dayBlocks.length === 0) return blocks.length > 0 ? 'Inactivo' : 'Sin horario';
+  if (dayBlocks.length === 1) return `${dayBlocks[0].startTime}–${dayBlocks[0].endTime}`;
+  return `${dayBlocks.length} rangos`;
+}
 
 export function AvailabilityManager() {
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [emergencyBlocks, setEmergencyBlocks] = useState<
     Array<{ id: string; startAt: string; endAt: string; reason: string | null }>
   >([]);
+  const [selectedDay, setSelectedDay] = useState<string>('LUNES');
+  const [showEmergency, setShowEmergency] = useState(false);
   const [loading, setLoading] = useState(true);
   const [emergencyForm, setEmergencyForm] = useState({
     startAt: '',
@@ -23,6 +43,21 @@ export function AvailabilityManager() {
     reason: '',
   });
   const { run, isLoading } = useAsyncAction();
+
+  const blocksByDay = useMemo(() => {
+    const map: Record<string, Array<Block & { index: number }>> = {};
+    DAYS_ORDER.forEach((day) => {
+      map[day] = [];
+    });
+    blocks.forEach((block, index) => {
+      if (map[block.dayOfWeek]) {
+        map[block.dayOfWeek].push({ ...block, index });
+      }
+    });
+    return map;
+  }, [blocks]);
+
+  const selectedDayBlocks = blocksByDay[selectedDay] ?? [];
 
   async function load() {
     const [availRes, blockRes] = await Promise.all([
@@ -54,158 +89,234 @@ export function AvailabilityManager() {
 
   async function saveAvailability() {
     await run('save-avail', async () => {
-      await fetch('/api/availability', {
+      const res = await fetch('/api/availability', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ blocks }),
       });
+      if (!res.ok) {
+        toast.error('Error al guardar los horarios');
+        return;
+      }
       await load();
+      toast.success('Horarios guardados correctamente');
     });
   }
 
   async function addEmergency(e: React.FormEvent) {
     e.preventDefault();
     await run('emergency', async () => {
-      await fetch('/api/booking-blocks', {
+      const res = await fetch('/api/booking-blocks', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(emergencyForm),
       });
+      if (!res.ok) {
+        toast.error('Error al agregar el bloqueo');
+        return;
+      }
       setEmergencyForm({ startAt: '', endAt: '', reason: '' });
       await load();
+      toast.success('Bloqueo de emergencia agregado');
     });
   }
 
   async function removeEmergency(id: string) {
     await run(`del:${id}`, async () => {
-      await fetch('/api/booking-blocks', {
+      const res = await fetch('/api/booking-blocks', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id }),
       });
+      if (!res.ok) {
+        toast.error('Error al eliminar el bloqueo');
+        return;
+      }
       await load();
+      toast.success('Bloqueo eliminado');
     });
   }
 
   if (loading) return <p className="text-muted">Cargando...</p>;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <section className="card space-y-4">
-        <h2 className="font-display text-xl">Horarios semanales</h2>
-        <p className="text-sm text-muted">
-          Puedes agregar varios rangos por día (ej. mañana y tarde con pausa de almuerzo).
-        </p>
-        {DAYS_ORDER.map((day) => {
-          const dayBlocks = blocks
-            .map((b, i) => ({ ...b, index: i }))
-            .filter((b) => b.dayOfWeek === day);
-          return (
-            <div key={day} className="rounded-lg border border-border p-4">
-              <div className="mb-3 flex items-center justify-between">
-                <h3 className="font-medium">{DAY_LABELS[day]}</h3>
-                <button type="button" onClick={() => addBlock(day)} className="text-sm text-accent">
-                  + Rango
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="font-heading text-xl font-bold">Horarios semanales</h2>
+            <p className="text-sm text-muted">Selecciona un día y configura sus franjas horarias.</p>
+          </div>
+          <button
+            type="button"
+            onClick={saveAvailability}
+            disabled={isLoading('save-avail')}
+            className="btn-primary"
+          >
+            Guardar horarios
+          </button>
+        </div>
+
+        <div className="overflow-x-auto pb-1">
+          <div className="flex min-w-max gap-2">
+            {DAYS_ORDER.map((day) => {
+              const dayBlocks = blocksByDay[day];
+              const isSelected = selectedDay === day;
+              return (
+                <button
+                  key={day}
+                  type="button"
+                  onClick={() => setSelectedDay(day)}
+                  className={`avail-day-tab ${isSelected ? 'avail-day-tab-active' : ''}`}
+                >
+                  <span className="font-mono text-xs font-bold uppercase tracking-wider">
+                    {DAY_SHORT[day]}
+                  </span>
+                  <span className="text-[10px] text-muted">{getDaySummary(dayBlocks)}</span>
                 </button>
-              </div>
-              {dayBlocks.length === 0 ? (
-                <p className="text-sm text-muted">Sin horario</p>
-              ) : (
-                dayBlocks.map((b) => (
-                  <div key={b.index} className="mb-2 flex flex-wrap items-center gap-2">
-                    <input
-                      type="time"
-                      value={b.startTime}
-                      onChange={(e) => updateBlock(b.index, 'startTime', e.target.value)}
-                      className="input-field w-auto"
-                    />
-                    <span className="text-muted">—</span>
-                    <input
-                      type="time"
-                      value={b.endTime}
-                      onChange={(e) => updateBlock(b.index, 'endTime', e.target.value)}
-                      className="input-field w-auto"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removeBlock(b.index)}
-                      className="text-sm text-danger"
-                    >
-                      Quitar
-                    </button>
-                  </div>
-                ))
-              )}
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="rounded border border-border p-4">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <div>
+              <h3 className="font-medium">{DAY_LABELS[selectedDay]}</h3>
+              <p className="text-xs text-muted">
+                {selectedDayBlocks.length === 0
+                  ? 'Sin horarios configurados'
+                  : `${selectedDayBlocks.length} franja${selectedDayBlocks.length !== 1 ? 's' : ''}`}
+              </p>
             </div>
-          );
-        })}
-        <button
-          type="button"
-          onClick={saveAvailability}
-          disabled={isLoading('save-avail')}
-          className="btn-primary"
-        >
-          Guardar horarios
-        </button>
+            <button
+              type="button"
+              onClick={() => addBlock(selectedDay)}
+              className="admin-chip admin-chip-active text-xs"
+            >
+              + Rango
+            </button>
+          </div>
+
+          {selectedDayBlocks.length === 0 ? (
+            <p className="py-6 text-center text-sm italic text-muted">Añade un rango para este día</p>
+          ) : (
+            <div className="space-y-2">
+              {selectedDayBlocks.map((block) => (
+                <div
+                  key={block.index}
+                  className="avail-slot-row flex flex-wrap items-center gap-2 rounded border border-border p-3"
+                >
+                  <input
+                    type="time"
+                    value={block.startTime}
+                    onChange={(e) => updateBlock(block.index, 'startTime', e.target.value)}
+                    className="input-field w-auto text-sm"
+                  />
+                  <span className="text-muted">—</span>
+                  <input
+                    type="time"
+                    value={block.endTime}
+                    onChange={(e) => updateBlock(block.index, 'endTime', e.target.value)}
+                    className="input-field w-auto text-sm"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => updateBlock(block.index, 'active', !block.active)}
+                    className={`admin-chip text-xs ${block.active ? 'admin-chip-active' : 'admin-chip-inactive'}`}
+                  >
+                    {block.active ? 'Activo' : 'Inactivo'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => removeBlock(block.index)}
+                    className="ml-auto text-sm text-danger"
+                  >
+                    Quitar
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </section>
 
       <section className="card space-y-4">
-        <h2 className="font-display text-xl">Bloqueadores de emergencia</h2>
-        <form onSubmit={addEmergency} className="grid gap-3 sm:grid-cols-2">
+        <button
+          type="button"
+          onClick={() => setShowEmergency((v) => !v)}
+          className="flex w-full items-center justify-between gap-3 text-left"
+        >
           <div>
-            <label className="mb-1 block text-sm text-muted">Desde</label>
-            <input
-              type="datetime-local"
-              required
-              value={emergencyForm.startAt}
-              onChange={(e) => setEmergencyForm((f) => ({ ...f, startAt: e.target.value }))}
-              className="input-field"
-            />
+            <h2 className="font-heading text-lg font-bold">Bloqueos de emergencia</h2>
+            <p className="text-sm text-muted">
+              {emergencyBlocks.length === 0
+                ? 'Sin bloqueos activos'
+                : `${emergencyBlocks.length} bloqueo${emergencyBlocks.length !== 1 ? 's' : ''}`}
+            </p>
           </div>
-          <div>
-            <label className="mb-1 block text-sm text-muted">Hasta</label>
-            <input
-              type="datetime-local"
-              required
-              value={emergencyForm.endAt}
-              onChange={(e) => setEmergencyForm((f) => ({ ...f, endAt: e.target.value }))}
-              className="input-field"
-            />
-          </div>
-          <input
-            placeholder="Motivo (opcional)"
-            value={emergencyForm.reason}
-            onChange={(e) => setEmergencyForm((f) => ({ ...f, reason: e.target.value }))}
-            className="input-field sm:col-span-2"
-          />
-          <button type="submit" disabled={isLoading('emergency')} className="btn-primary sm:col-span-2">
-            Agregar bloqueo
-          </button>
-        </form>
-        <ul className="space-y-2">
-          {emergencyBlocks.map((b) => (
-            <li
-              key={b.id}
-              className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border p-3"
-            >
+          <span className="text-muted">{showEmergency ? '▲' : '▼'}</span>
+        </button>
+
+        {showEmergency && (
+          <>
+            <form onSubmit={addEmergency} className="grid gap-3 sm:grid-cols-2">
               <div>
-                <p className="text-sm">
-                  {new Date(b.startAt).toLocaleString('es-CL')} —{' '}
-                  {new Date(b.endAt).toLocaleString('es-CL')}
-                </p>
-                {b.reason && <p className="text-xs text-muted">{b.reason}</p>}
+                <label className="mb-1 block text-sm text-muted">Desde</label>
+                <input
+                  type="datetime-local"
+                  required
+                  value={emergencyForm.startAt}
+                  onChange={(e) => setEmergencyForm((f) => ({ ...f, startAt: e.target.value }))}
+                  className="input-field"
+                />
               </div>
-              <button
-                type="button"
-                onClick={() => removeEmergency(b.id)}
-                disabled={isLoading(`del:${b.id}`)}
-                className="text-sm text-danger"
-              >
-                Eliminar
+              <div>
+                <label className="mb-1 block text-sm text-muted">Hasta</label>
+                <input
+                  type="datetime-local"
+                  required
+                  value={emergencyForm.endAt}
+                  onChange={(e) => setEmergencyForm((f) => ({ ...f, endAt: e.target.value }))}
+                  className="input-field"
+                />
+              </div>
+              <input
+                placeholder="Motivo (opcional)"
+                value={emergencyForm.reason}
+                onChange={(e) => setEmergencyForm((f) => ({ ...f, reason: e.target.value }))}
+                className="input-field sm:col-span-2"
+              />
+              <button type="submit" disabled={isLoading('emergency')} className="btn-primary sm:col-span-2">
+                Agregar bloqueo
               </button>
-            </li>
-          ))}
-        </ul>
+            </form>
+            <ul className="space-y-2">
+              {emergencyBlocks.map((b) => (
+                <li
+                  key={b.id}
+                  className="flex flex-wrap items-center justify-between gap-2 rounded border border-border p-3"
+                >
+                  <div>
+                    <p className="text-sm">
+                      {new Date(b.startAt).toLocaleString('es-CL')} —{' '}
+                      {new Date(b.endAt).toLocaleString('es-CL')}
+                    </p>
+                    {b.reason && <p className="text-xs text-muted">{b.reason}</p>}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removeEmergency(b.id)}
+                    disabled={isLoading(`del:${b.id}`)}
+                    className="text-sm text-danger"
+                  >
+                    Eliminar
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
       </section>
     </div>
   );

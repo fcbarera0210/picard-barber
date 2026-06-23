@@ -53,6 +53,8 @@ export const authConfig: AuthConfig = {
   session: { strategy: 'jwt', maxAge: 60 * 60 * 24 * 7 },
   pages: {
     signIn: '/admin/login',
+    signOut: '/admin/login',
+    error: '/admin/login',
   },
   callbacks: {
     async jwt({ token, user }) {

@@ -1,5 +1,16 @@
 import { useEffect, useState } from 'react';
 import { useAsyncAction } from '../../hooks/useAsyncAction';
+import { toast } from '../../lib/toast';
+import {
+  BOOKING_WHATSAPP_VARIABLES,
+  CLIENT_WHATSAPP_VARIABLES,
+  WhatsAppMessageEditor,
+} from './WhatsAppMessageEditor';
+
+import {
+  DEFAULT_WHATSAPP_BOOKING_TEMPLATE,
+  DEFAULT_WHATSAPP_CLIENT_TEMPLATE,
+} from '../../lib/whatsapp';
 
 type Business = {
   name: string;
@@ -7,6 +18,8 @@ type Business = {
   address: string | null;
   phone: string | null;
   whatsappNumber: string | null;
+  whatsappMessageTemplate: string | null;
+  whatsappClientMessageTemplate: string | null;
   mapsUrl: string | null;
   instagramUrl: string | null;
   maxAdvanceDays: number;
@@ -14,7 +27,6 @@ type Business = {
 
 export function BusinessConfig() {
   const [form, setForm] = useState<Business | null>(null);
-  const [message, setMessage] = useState('');
   const { run, isLoading } = useAsyncAction();
 
   useEffect(() => {
@@ -26,7 +38,6 @@ export function BusinessConfig() {
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     if (!form) return;
-    setMessage('');
     await run('save', async () => {
       const res = await fetch('/api/business', {
         method: 'PATCH',
@@ -34,9 +45,9 @@ export function BusinessConfig() {
         body: JSON.stringify(form),
       });
       if (res.ok) {
-        setMessage('Guardado correctamente');
+        toast.success('Configuración guardada correctamente');
       } else {
-        setMessage('Error al guardar');
+        toast.error('Error al guardar la configuración');
       }
     });
   }
@@ -44,9 +55,8 @@ export function BusinessConfig() {
   if (!form) return <p className="text-muted">Cargando...</p>;
 
   return (
-    <form onSubmit={handleSave} className="card mx-auto max-w-2xl space-y-4">
-      <h2 className="font-display text-xl">Configuración del local</h2>
-      {message && <p className="text-sm text-success">{message}</p>}
+    <form onSubmit={handleSave} className="card space-y-4">
+      <h2 className="font-heading font-bold text-xl">Configuración del local</h2>
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="sm:col-span-2">
           <label className="mb-1 block text-sm text-muted">Nombre</label>
@@ -119,6 +129,31 @@ export function BusinessConfig() {
             className="input-field"
           />
         </div>
+      </div>
+
+      <div className="space-y-4 border-t border-border pt-4">
+        <h3 className="font-heading font-bold text-lg">Mensajes de WhatsApp</h3>
+        <p className="text-sm text-muted">
+          Personaliza los mensajes que se abren al contactar clientes. Pasa el cursor sobre cada variable para ver qué hace.
+        </p>
+        <WhatsAppMessageEditor
+          label="Mensaje al contactar por una cita (agenda)"
+          value={form.whatsappMessageTemplate ?? ''}
+          placeholder={DEFAULT_WHATSAPP_BOOKING_TEMPLATE}
+          variables={BOOKING_WHATSAPP_VARIABLES}
+          onChange={(whatsappMessageTemplate) =>
+            setForm((f) => f && { ...f, whatsappMessageTemplate })
+          }
+        />
+        <WhatsAppMessageEditor
+          label="Mensaje al contactar un cliente (listado)"
+          value={form.whatsappClientMessageTemplate ?? ''}
+          placeholder={DEFAULT_WHATSAPP_CLIENT_TEMPLATE}
+          variables={CLIENT_WHATSAPP_VARIABLES}
+          onChange={(whatsappClientMessageTemplate) =>
+            setForm((f) => f && { ...f, whatsappClientMessageTemplate })
+          }
+        />
       </div>
       <button type="submit" disabled={isLoading('save')} className="btn-primary">
         Guardar cambios

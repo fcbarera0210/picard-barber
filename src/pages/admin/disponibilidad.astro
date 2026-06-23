@@ -1,9 +1,10 @@
 ---
 import AdminLayout from '../../layouts/AdminLayout.astro';
+import AdminPageHeader from '../../components/astro/AdminPageHeader.astro';
 import { AvailabilityManager } from '../../components/react/AvailabilityManager';
 ---
 
 <AdminLayout>
-  <h1 class="font-display mb-8 text-3xl text-accent">Disponibilidad</h1>
+  <AdminPageHeader title="Disponibilidad" />
   <AvailabilityManager client:load />
 </AdminLayout>

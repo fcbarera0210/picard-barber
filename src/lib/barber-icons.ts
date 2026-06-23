@@ -11,6 +11,30 @@ export type BarberIconName = (typeof BARBER_ICON_FILES)[number];
 
 export type BarberIconTone = 'accent' | 'white' | 'muted' | 'inverse';
 
+export const BARBER_ICON_LABELS: Record<BarberIconName, string> = {
+  scissors: 'Tijeras',
+  comb: 'Peine',
+  razor: 'Navaja',
+  shave: 'Afeitado',
+  dryer: 'Secador',
+  'foam-brush': 'Brocha',
+};
+
+export const DEFAULT_BARBER_ICON: BarberIconName = 'scissors';
+
+export function isBarberIcon(value: string | null | undefined): value is BarberIconName {
+  return BARBER_ICON_FILES.includes(value as BarberIconName);
+}
+
+export function serviceBarberIcon(
+  icon: string | null | undefined,
+  name: string,
+  index = 0,
+): BarberIconName {
+  if (isBarberIcon(icon)) return icon;
+  return resolveBarberIcon(name, index);
+}
+
 export function resolveBarberIcon(name: string, index = 0): BarberIconName {
   const n = name.toLowerCase();
 

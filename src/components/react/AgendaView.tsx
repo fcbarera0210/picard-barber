@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { formatDateTimeChile } from '../../lib/datetime';
 import { buildBookingWhatsAppMessage, openWhatsAppUrl } from '../../lib/whatsapp';
 import { useAsyncAction } from '../../hooks/useAsyncAction';
+import { toast } from '../../lib/toast';
+import { ReservationsCalendar } from './ReservationsCalendar';
 
 type Booking = {
   id: string;
@@ -21,12 +23,16 @@ function toDateInput(d: Date): string {
   return `${y}-${m}-${day}`;
 }
 
+type ViewMode = 'list' | 'calendar';
+
 export function AgendaView() {
+  const [viewMode, setViewMode] = useState<ViewMode>('calendar');
   const [view, setView] = useState<'day' | 'week'>('day');
   const [date, setDate] = useState(toDateInput(new Date()));
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [businessName, setBusinessName] = useState('Picard Barber');
+  const [whatsappBookingTemplate, setWhatsappBookingTemplate] = useState<string | null>(null);
   const { run, isLoading } = useAsyncAction();
 
   async function load() {
@@ -48,22 +54,30 @@ export function AgendaView() {
     const bizRes = await fetch('/api/business');
     const bizData = await bizRes.json();
     if (bizData.business?.name) setBusinessName(bizData.business.name);
+    setWhatsappBookingTemplate(bizData.business?.whatsappMessageTemplate ?? null);
     setLoading(false);
   }
 
   useEffect(() => {
-    load();
-  }, [date, view]);
+    if (viewMode === 'list') {
+      load();
+    }
+  }, [date, view, viewMode]);
 
   async function cancelBooking(id: string) {
     if (!confirm('¿Cancelar esta cita?')) return;
     await run(`cancel:${id}`, async () => {
-      await fetch('/api/bookings', {
+      const res = await fetch('/api/bookings', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, status: 'cancelled' }),
       });
+      if (!res.ok) {
+        toast.error('Error al cancelar la cita');
+        return;
+      }
       await load();
+      toast.success('Cita cancelada correctamente');
     });
   }
 
@@ -74,6 +88,7 @@ export function AgendaView() {
       serviceName: b.serviceName,
       startAt: new Date(b.startAt),
       businessName,
+      template: whatsappBookingTemplate,
     });
     openWhatsAppUrl(b.clientPhone, message);
   }
@@ -84,28 +99,51 @@ export function AgendaView() {
         <div className="flex gap-1">
           <button
             type="button"
-            onClick={() => setView('day')}
-            className={view === 'day' ? 'admin-chip admin-chip-active' : 'admin-chip admin-chip-inactive'}
+            onClick={() => setViewMode('calendar')}
+            className={viewMode === 'calendar' ? 'admin-chip admin-chip-active' : 'admin-chip admin-chip-inactive'}
           >
-            Día
+            Calendario
           </button>
           <button
             type="button"
-            onClick={() => setView('week')}
-            className={view === 'week' ? 'admin-chip admin-chip-active' : 'admin-chip admin-chip-inactive'}
+            onClick={() => setViewMode('list')}
+            className={viewMode === 'list' ? 'admin-chip admin-chip-active' : 'admin-chip admin-chip-inactive'}
           >
-            Semana
+            Lista
           </button>
         </div>
-        <input
-          type="date"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-          className="input-field w-auto"
-        />
+
+        {viewMode === 'list' && (
+          <>
+            <div className="flex gap-1">
+              <button
+                type="button"
+                onClick={() => setView('day')}
+                className={view === 'day' ? 'admin-chip admin-chip-active' : 'admin-chip admin-chip-inactive'}
+              >
+                Día
+              </button>
+              <button
+                type="button"
+                onClick={() => setView('week')}
+                className={view === 'week' ? 'admin-chip admin-chip-active' : 'admin-chip admin-chip-inactive'}
+              >
+                Semana
+              </button>
+            </div>
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className="input-field w-auto"
+            />
+          </>
+        )}
       </div>
 
-      {loading ? (
+      {viewMode === 'calendar' ? (
+        <ReservationsCalendar defaultView="month" title="Agenda" />
+      ) : loading ? (
         <p className="text-muted">Cargando agenda...</p>
       ) : bookings.length === 0 ? (
         <p className="text-muted">No hay citas en este período.</p>

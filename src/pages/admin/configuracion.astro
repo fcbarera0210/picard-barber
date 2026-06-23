@@ -1,9 +1,14 @@
 ---
 import AdminLayout from '../../layouts/AdminLayout.astro';
+import AdminPageHeader from '../../components/astro/AdminPageHeader.astro';
+import { AdminUsersManager } from '../../components/react/AdminUsersManager';
 import { BusinessConfig } from '../../components/react/BusinessConfig';
 ---
 
 <AdminLayout>
-  <h1 class="font-display mb-8 text-3xl text-accent">Configuración</h1>
-  <BusinessConfig client:load />
+  <AdminPageHeader title="Configuración" />
+  <div class="space-y-6">
+    <BusinessConfig client:load />
+    <AdminUsersManager client:load />
+  </div>
 </AdminLayout>

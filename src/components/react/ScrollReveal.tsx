@@ -29,6 +29,17 @@ export function ScrollReveal({ children, className = '' }: ScrollRevealProps) {
     );
 
     observer.observe(el);
+
+    // Si ya está en viewport al montar (p. ej. recarga con scroll), revelar de inmediato
+    requestAnimationFrame(() => {
+      const rect = el.getBoundingClientRect();
+      const inView = rect.top < window.innerHeight - 40 && rect.bottom > 0;
+      if (inView) {
+        el.classList.add('is-visible');
+        observer.unobserve(el);
+      }
+    });
+
     return () => observer.disconnect();
   }, []);
 

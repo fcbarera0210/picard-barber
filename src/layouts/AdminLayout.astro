@@ -1,7 +1,11 @@
 ---
 import '../styles/global.css';
+import { ClientRouter } from 'astro:transitions';
 import { AdminMobileNav } from '../components/react/AdminMobileNav';
 import { AdminSignOut } from '../components/react/AdminSignOut';
+import { ParallaxBackground } from '../components/react/ParallaxBackground';
+import { TechnoSynth } from '../components/react/TechnoSynth';
+import { ToastHost } from '../components/react/ToastHost';
 
 const pathname = Astro.url.pathname;
 
@@ -15,7 +19,7 @@ function navClass(href: string) {
 ---
 
 <!doctype html>
-<html lang="es">
+<html lang="es" class="min-h-dvh">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -23,20 +27,26 @@ function navClass(href: string) {
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Montserrat:wght@700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Montserrat:ital,wght@0,700;0,800;1,700;1,800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap"
       rel="stylesheet"
     />
     <title>Admin — Picard Barber</title>
+    <ClientRouter />
   </head>
-  <body class="min-h-screen bg-bg text-ink">
-    <header class="sticky top-0 z-50 border-b border-white/5 bg-surface/90 backdrop-blur-md">
-      <div class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-4">
-        <a href="/admin" class="font-heading text-xl font-bold tracking-tight">
-          <span class="text-accent">Panel</span>
-          <span class="text-muted"> admin</span>
+  <body class="min-h-dvh overflow-x-hidden bg-bg text-ink">
+    <ParallaxBackground client:load />
+    <header class="sticky top-0 z-50 border-b border-white/5 bg-bg/90 backdrop-blur-md">
+      <div class="mx-auto flex h-20 max-w-7xl items-center justify-between gap-4 px-4 md:px-6">
+        <a href="/admin" class="font-heading leading-tight">
+          <span class="text-lg font-bold uppercase italic tracking-widest md:text-xl">
+            <span class="text-white">PICARD</span><span class="text-accent neon-text-acid">BARBER</span>
+          </span>
+          <span class="mt-0.5 block font-mono text-[10px] uppercase tracking-[0.2em] text-muted">
+            Panel admin
+          </span>
         </a>
         <div class="flex items-center gap-2">
-          <nav class="hidden flex-wrap gap-1 sm:flex">
+          <nav class="hidden flex-wrap items-center gap-1 lg:flex">
             <a href="/admin" class={navClass('/admin')}>Dashboard</a>
             <a href="/admin/agenda" class={navClass('/admin/agenda')}>Agenda</a>
             <a href="/admin/servicios" class={navClass('/admin/servicios')}>Servicios</a>
@@ -45,15 +55,19 @@ function navClass(href: string) {
             <a href="/admin/configuracion" class={navClass('/admin/configuracion')}>Config</a>
             <a href="/" class="admin-nav-link text-muted">Sitio público</a>
           </nav>
-          <div class="hidden sm:block">
+          <div class="hidden lg:block">
+            <TechnoSynth client:load transition:persist="techno-audio" variant="header" />
+          </div>
+          <div class="hidden lg:block">
             <AdminSignOut client:load />
           </div>
           <AdminMobileNav pathname={pathname} client:load />
         </div>
       </div>
     </header>
-    <main class="mx-auto max-w-7xl px-4 py-8">
+    <main class="relative z-10 mx-auto max-w-7xl px-4 py-8 md:px-6" transition:animate="fade">
       <slot />
     </main>
+    <ToastHost client:load />
   </body>
 </html>
