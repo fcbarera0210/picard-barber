@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { formatDateTimeChile } from '../../lib/datetime';
 import type { CalendarViewMode } from '../../lib/calendar-utils';
 import {
@@ -12,6 +12,10 @@ import {
   getWeekDays,
   isToday,
 } from '../../lib/calendar-utils';
+import { useIsMobile } from '../../hooks/useMediaQuery';
+import { useBookingBusiness } from '../../hooks/useBookingBusiness';
+import { BookingDayCard } from './BookingDayCard';
+import { DayDetailSheet } from './DayDetailSheet';
 
 export type CalendarBooking = {
   id: string;
@@ -28,51 +32,78 @@ type ReservationsCalendarProps = {
   compact?: boolean;
   defaultView?: CalendarViewMode;
   title?: string;
+  enableActions?: boolean;
+  showAgendaLink?: boolean;
 };
 
 const DAY_NAMES_SHORT = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+const DAY_NAMES_MOBILE = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
 const DAY_NAMES_WEEK = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 
 export function ReservationsCalendar({
   compact = false,
   defaultView = 'week',
   title = 'Calendario de reservas',
+  enableActions = true,
+  showAgendaLink,
 }: ReservationsCalendarProps) {
+  const isMobile = useIsMobile();
+  const { businessName, whatsappBookingTemplate } = useBookingBusiness();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<CalendarViewMode>(defaultView);
   const [bookings, setBookings] = useState<CalendarBooking[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedBookings, setSelectedBookings] = useState<CalendarBooking[]>([]);
+  const [reloadKey, setReloadKey] = useState(0);
+  const [mobileInitialized, setMobileInitialized] = useState(false);
+
+  const resolvedShowAgendaLink = showAgendaLink ?? true;
+
+  const loadBookings = useCallback(async (signal?: AbortSignal) => {
+    setLoading(true);
+    const { from, to } = getFetchRange(currentDate, viewMode);
+    try {
+      const res = await fetch(`/api/bookings?from=${from.toISOString()}&to=${to.toISOString()}`, {
+        signal,
+      });
+      const data = await res.json();
+      setBookings(
+        (data.bookings ?? []).filter((b: CalendarBooking) => b.status === 'confirmed'),
+      );
+    } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') return;
+      setBookings([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [currentDate, viewMode]);
 
   useEffect(() => {
-    let cancelled = false;
+    const controller = new AbortController();
+    loadBookings(controller.signal);
+    return () => controller.abort();
+  }, [loadBookings, reloadKey]);
 
-    async function load() {
-      setLoading(true);
-      const { from, to } = getFetchRange(currentDate, viewMode);
-      try {
-        const res = await fetch(
-          `/api/bookings?from=${from.toISOString()}&to=${to.toISOString()}`,
-        );
-        const data = await res.json();
-        if (!cancelled) {
-          setBookings(
-            (data.bookings ?? []).filter((b: CalendarBooking) => b.status === 'confirmed'),
-          );
-        }
-      } catch {
-        if (!cancelled) setBookings([]);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
+  useEffect(() => {
+    if (!isMobile) return;
+    if (viewMode === 'week') {
+      setViewMode('day');
     }
+  }, [isMobile, viewMode]);
 
-    load();
-    return () => {
-      cancelled = true;
-    };
-  }, [currentDate, viewMode]);
+  useEffect(() => {
+    if (!isMobile || mobileInitialized) return;
+    if (defaultView === 'month' || defaultView === 'week') {
+      setViewMode('day');
+    }
+    setMobileInitialized(true);
+  }, [isMobile, defaultView, mobileInitialized]);
+
+  useEffect(() => {
+    if (!selectedDate) return;
+    setSelectedBookings(getBookingsForDate(selectedDate));
+  }, [bookings, selectedDate]);
 
   const bookingsByDate = useMemo(() => {
     const map = new Map<string, CalendarBooking[]>();
@@ -89,6 +120,10 @@ export function ReservationsCalendar({
 
   const getBookingsForDate = (date: Date) => bookingsByDate.get(formatDateKey(date)) ?? [];
 
+  const handleBookingCancelled = useCallback(() => {
+    setReloadKey((k) => k + 1);
+  }, []);
+
   const navigate = (direction: 'prev' | 'next') => {
     setCurrentDate((prev) => {
       if (viewMode === 'day') return addDays(prev, direction === 'prev' ? -1 : 1);
@@ -102,32 +137,38 @@ export function ReservationsCalendar({
     setSelectedBookings(getBookingsForDate(date));
   };
 
+  const closeDetail = () => {
+    setSelectedDate(null);
+    setSelectedBookings([]);
+  };
+
   const renderBookingChip = (booking: CalendarBooking) => (
-    <a
+    <span
       key={booking.id}
-      href="/admin/agenda"
       className="calendar-booking-chip block truncate"
       title={`${booking.clientName} — ${booking.serviceName}`}
-      onClick={(e) => e.stopPropagation()}
     >
       {new Date(booking.startAt).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}{' '}
       {booking.clientName}
-    </a>
+    </span>
   );
 
   const cellMinH = compact ? 'min-h-[72px]' : 'min-h-[96px]';
   const weekMinH = compact ? 'min-h-[110px]' : 'min-h-[140px]';
 
-  const renderMonthView = () => {
+  const renderMonthViewDesktop = () => {
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
     const days = getMonthGridDays(year, month);
     const maxVisible = compact ? 1 : 2;
 
     return (
-      <div className="grid grid-cols-7 gap-1.5 sm:gap-2">
+      <div className="hidden grid-cols-7 gap-1.5 sm:gap-2 md:grid">
         {DAY_NAMES_SHORT.map((day) => (
-          <div key={day} className="calendar-weekday-label p-1.5 text-center text-xs font-mono uppercase tracking-wider">
+          <div
+            key={day}
+            className="calendar-weekday-label p-1.5 text-center text-xs font-mono uppercase tracking-wider"
+          >
             {day}
           </div>
         ))}
@@ -159,12 +200,57 @@ export function ReservationsCalendar({
     );
   };
 
+  const renderMonthViewMobile = () => {
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    const days = getMonthGridDays(year, month);
+
+    return (
+      <div className="grid grid-cols-7 gap-1 md:hidden">
+        {DAY_NAMES_MOBILE.map((day, i) => (
+          <div
+            key={`${day}-${i}`}
+            className="calendar-weekday-label calendar-weekday-label-mobile text-center font-mono uppercase tracking-wider"
+          >
+            {day}
+          </div>
+        ))}
+        {days.map((date, index) => {
+          const dayBookings = getBookingsForDate(date);
+          const isCurrentMonth = date.getMonth() === month && date.getFullYear() === year;
+          const isTodayDate = isToday(date);
+          const count = dayBookings.length;
+
+          return (
+            <button
+              key={index}
+              type="button"
+              onClick={() => handleDateClick(date)}
+              className={`calendar-cell calendar-cell-mobile transition ${isTodayDate ? 'calendar-cell-today' : ''} ${!isCurrentMonth ? 'calendar-cell-outside' : ''}`}
+            >
+              <span className={`text-sm font-medium ${isTodayDate ? 'text-accent' : ''}`}>
+                {date.getDate()}
+              </span>
+              {count > 0 && (
+                count > 1 ? (
+                  <span className="calendar-day-count">{count}</span>
+                ) : (
+                  <span className="calendar-day-dot" aria-label="1 cita" />
+                )
+              )}
+            </button>
+          );
+        })}
+      </div>
+    );
+  };
+
   const renderWeekView = () => {
     const weekDays = getWeekDays(currentDate);
     const maxVisible = compact ? 3 : 5;
 
     return (
-      <div className="grid grid-cols-7 gap-1.5 sm:gap-2">
+      <div className="hidden grid-cols-7 gap-1.5 sm:gap-2 md:grid">
         {weekDays.map((date) => {
           const dayBookings = getBookingsForDate(date);
           const dayIndex = date.getDay() === 0 ? 6 : date.getDay() - 1;
@@ -205,6 +291,23 @@ export function ReservationsCalendar({
       return <p className="py-8 text-center text-sm text-muted">No hay citas confirmadas este día.</p>;
     }
 
+    if (enableActions) {
+      return (
+        <div className="space-y-2">
+          {dayBookings.map((booking) => (
+            <BookingDayCard
+              key={booking.id}
+              booking={booking}
+              businessName={businessName}
+              whatsappTemplate={whatsappBookingTemplate}
+              onCancelled={handleBookingCancelled}
+              compact
+            />
+          ))}
+        </div>
+      );
+    }
+
     return (
       <div className="space-y-2">
         {dayBookings.map((booking) => (
@@ -223,9 +326,59 @@ export function ReservationsCalendar({
     );
   };
 
-  return (
-    <section className="card space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+  const viewModes: CalendarViewMode[] = isMobile ? ['day', 'month'] : ['day', 'week', 'month'];
+
+  const renderToolbar = () => (
+    <>
+      <div className="md:hidden">
+        <div className="space-y-3">
+          <div>
+            <h2 className="font-heading text-lg font-bold">{title}</h2>
+            <p className="text-sm capitalize text-muted">{getPeriodLabel(currentDate, viewMode)}</p>
+          </div>
+
+          <div className="flex items-center justify-center gap-2">
+            <button
+              type="button"
+              onClick={() => navigate('prev')}
+              className="admin-chip admin-chip-inactive min-h-11 min-w-11 px-3 text-lg"
+              aria-label="Anterior"
+            >
+              ‹
+            </button>
+            <button
+              type="button"
+              onClick={() => setCurrentDate(new Date())}
+              className="admin-chip admin-chip-active min-h-11 flex-1"
+            >
+              Hoy
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate('next')}
+              className="admin-chip admin-chip-inactive min-h-11 min-w-11 px-3 text-lg"
+              aria-label="Siguiente"
+            >
+              ›
+            </button>
+          </div>
+
+          <div className="calendar-view-toggle-mobile">
+            {viewModes.map((mode) => (
+              <button
+                key={mode}
+                type="button"
+                onClick={() => setViewMode(mode)}
+                className={viewMode === mode ? 'admin-chip admin-chip-active' : 'admin-chip admin-chip-inactive'}
+              >
+                {mode === 'day' ? 'Día' : 'Mes'}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="hidden flex-wrap items-center justify-between gap-3 md:flex">
         <div>
           <h2 className="font-heading text-lg font-bold">{title}</h2>
           <p className="text-sm capitalize text-muted">{getPeriodLabel(currentDate, viewMode)}</p>
@@ -233,7 +386,7 @@ export function ReservationsCalendar({
 
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex gap-1">
-            {(['day', 'week', 'month'] as CalendarViewMode[]).map((mode) => (
+            {viewModes.map((mode) => (
               <button
                 key={mode}
                 type="button"
@@ -255,63 +408,107 @@ export function ReservationsCalendar({
           </button>
         </div>
       </div>
+    </>
+  );
+
+  const renderDesktopModal = () => {
+    if (!selectedDate || isMobile) return null;
+
+    return (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4"
+        onClick={closeDetail}
+        role="dialog"
+        aria-modal="true"
+      >
+        <div className="card w-full max-w-md space-y-4" onClick={(e) => e.stopPropagation()}>
+          <div className="flex items-start justify-between gap-3">
+            <h3 className="font-heading font-bold capitalize">
+              {selectedDate.toLocaleDateString('es-CL', {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long',
+              })}
+            </h3>
+            <button
+              type="button"
+              onClick={closeDetail}
+              className="text-muted hover:text-ink"
+              aria-label="Cerrar"
+            >
+              ✕
+            </button>
+          </div>
+
+          {selectedBookings.length === 0 ? (
+            <p className="text-sm text-muted">Sin citas confirmadas.</p>
+          ) : enableActions ? (
+            <div className="space-y-2">
+              {selectedBookings.map((booking) => (
+                <BookingDayCard
+                  key={booking.id}
+                  booking={booking}
+                  businessName={businessName}
+                  whatsappTemplate={whatsappBookingTemplate}
+                  onCancelled={handleBookingCancelled}
+                  compact
+                />
+              ))}
+            </div>
+          ) : (
+            <ul className="space-y-2">
+              {selectedBookings.map((booking) => (
+                <li key={booking.id} className="calendar-day-item rounded border border-border p-3">
+                  <p className="font-medium">{booking.clientName}</p>
+                  <p className="text-sm text-muted">{booking.serviceName}</p>
+                  <p className="text-sm">{formatDateTimeChile(new Date(booking.startAt))}</p>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {resolvedShowAgendaLink && (
+            <a href="/admin/agenda" className="btn-primary block text-center">
+              Ver agenda
+            </a>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <section className="card space-y-4">
+      {renderToolbar()}
 
       {loading ? (
         <p className="text-sm text-muted">Cargando reservas...</p>
       ) : (
         <>
-          {viewMode === 'month' && renderMonthView()}
+          {viewMode === 'month' && (
+            <>
+              {renderMonthViewMobile()}
+              {renderMonthViewDesktop()}
+            </>
+          )}
           {viewMode === 'week' && renderWeekView()}
           {viewMode === 'day' && renderDayView()}
         </>
       )}
 
-      {selectedDate && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4"
-          onClick={() => setSelectedDate(null)}
-          role="dialog"
-          aria-modal="true"
-        >
-          <div className="card w-full max-w-md space-y-4" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-start justify-between gap-3">
-              <h3 className="font-heading font-bold">
-                {selectedDate.toLocaleDateString('es-CL', {
-                  weekday: 'long',
-                  day: 'numeric',
-                  month: 'long',
-                })}
-              </h3>
-              <button
-                type="button"
-                onClick={() => setSelectedDate(null)}
-                className="text-muted hover:text-ink"
-                aria-label="Cerrar"
-              >
-                ✕
-              </button>
-            </div>
-
-            {selectedBookings.length === 0 ? (
-              <p className="text-sm text-muted">Sin citas confirmadas.</p>
-            ) : (
-              <ul className="space-y-2">
-                {selectedBookings.map((booking) => (
-                  <li key={booking.id} className="calendar-day-item rounded border border-border p-3">
-                    <p className="font-medium">{booking.clientName}</p>
-                    <p className="text-sm text-muted">{booking.serviceName}</p>
-                    <p className="text-sm">{formatDateTimeChile(new Date(booking.startAt))}</p>
-                  </li>
-                ))}
-              </ul>
-            )}
-
-            <a href="/admin/agenda" className="btn-primary block text-center">
-              Ver agenda
-            </a>
-          </div>
-        </div>
+      {selectedDate && isMobile && (
+        <DayDetailSheet
+          date={selectedDate}
+          bookings={selectedBookings}
+          businessName={businessName}
+          whatsappTemplate={whatsappBookingTemplate}
+          onClose={closeDetail}
+          onCancelled={handleBookingCancelled}
+          showAgendaLink={resolvedShowAgendaLink}
+        />
       )}
+
+      {renderDesktopModal()}
     </section>
   );
 }

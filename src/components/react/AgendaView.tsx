@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
-import { formatDateTimeChile } from '../../lib/datetime';
-import { buildBookingWhatsAppMessage, openWhatsAppUrl } from '../../lib/whatsapp';
-import { useAsyncAction } from '../../hooks/useAsyncAction';
-import { toast } from '../../lib/toast';
+import { useIsMobile } from '../../hooks/useMediaQuery';
+import { useBookingBusiness } from '../../hooks/useBookingBusiness';
+import { BookingDayCard } from './BookingDayCard';
 import { ReservationsCalendar } from './ReservationsCalendar';
 
 type Booking = {
@@ -26,18 +25,19 @@ function toDateInput(d: Date): string {
 type ViewMode = 'list' | 'calendar';
 
 export function AgendaView() {
+  const isMobile = useIsMobile();
+  const { businessName, whatsappBookingTemplate } = useBookingBusiness();
   const [viewMode, setViewMode] = useState<ViewMode>('calendar');
   const [view, setView] = useState<'day' | 'week'>('day');
   const [date, setDate] = useState(toDateInput(new Date()));
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
-  const [businessName, setBusinessName] = useState('Picard Barber');
-  const [whatsappBookingTemplate, setWhatsappBookingTemplate] = useState<string | null>(null);
-  const { run, isLoading } = useAsyncAction();
+  const [reloadKey, setReloadKey] = useState(0);
 
   async function load() {
     setLoading(true);
-    if (view === 'day') {
+    const listView = isMobile ? 'day' : view;
+    if (listView === 'day') {
       const res = await fetch(`/api/bookings?date=${date}`);
       const data = await res.json();
       setBookings(data.bookings ?? []);
@@ -51,10 +51,6 @@ export function AgendaView() {
       const data = await res.json();
       setBookings(data.bookings ?? []);
     }
-    const bizRes = await fetch('/api/business');
-    const bizData = await bizRes.json();
-    if (bizData.business?.name) setBusinessName(bizData.business.name);
-    setWhatsappBookingTemplate(bizData.business?.whatsappMessageTemplate ?? null);
     setLoading(false);
   }
 
@@ -62,35 +58,16 @@ export function AgendaView() {
     if (viewMode === 'list') {
       load();
     }
-  }, [date, view, viewMode]);
+  }, [date, view, viewMode, isMobile, reloadKey]);
 
-  async function cancelBooking(id: string) {
-    if (!confirm('¿Cancelar esta cita?')) return;
-    await run(`cancel:${id}`, async () => {
-      const res = await fetch('/api/bookings', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, status: 'cancelled' }),
-      });
-      if (!res.ok) {
-        toast.error('Error al cancelar la cita');
-        return;
-      }
-      await load();
-      toast.success('Cita cancelada correctamente');
-    });
-  }
+  useEffect(() => {
+    if (isMobile && view === 'week') {
+      setView('day');
+    }
+  }, [isMobile, view]);
 
-  function handleWhatsApp(b: Booking) {
-    const message = buildBookingWhatsAppMessage({
-      clientName: b.clientName,
-      clientPhone: b.clientPhone,
-      serviceName: b.serviceName,
-      startAt: new Date(b.startAt),
-      businessName,
-      template: whatsappBookingTemplate,
-    });
-    openWhatsAppUrl(b.clientPhone, message);
+  function handleBookingCancelled() {
+    setReloadKey((k) => k + 1);
   }
 
   return (
@@ -115,7 +92,7 @@ export function AgendaView() {
 
         {viewMode === 'list' && (
           <>
-            <div className="flex gap-1">
+            <div className={`flex gap-1 ${isMobile ? 'hidden' : ''}`}>
               <button
                 type="button"
                 onClick={() => setView('day')}
@@ -142,7 +119,12 @@ export function AgendaView() {
       </div>
 
       {viewMode === 'calendar' ? (
-        <ReservationsCalendar defaultView="month" title="Agenda" />
+        <ReservationsCalendar
+          defaultView="month"
+          title="Agenda"
+          enableActions
+          showAgendaLink={false}
+        />
       ) : loading ? (
         <p className="text-muted">Cargando agenda...</p>
       ) : bookings.length === 0 ? (
@@ -150,44 +132,14 @@ export function AgendaView() {
       ) : (
         <div className="space-y-3">
           {bookings.map((b) => (
-            <div key={b.id} className="card flex flex-wrap items-start justify-between gap-4">
-              <div>
-                <p className="font-semibold">{b.clientName}</p>
-                <p className="text-sm text-muted">{b.serviceName}</p>
-                <p className="text-sm">{formatDateTimeChile(new Date(b.startAt))}</p>
-                <p className="text-xs text-muted">
-                  {b.clientEmail} · {b.clientPhone}
-                </p>
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <span
-                  className={
-                    b.status === 'confirmed' ? 'status-confirmed text-sm' : 'status-cancelled text-sm'
-                  }
-                >
-                  {b.status === 'confirmed' ? 'Confirmada' : 'Cancelada'}
-                </span>
-                {b.status === 'confirmed' && (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => handleWhatsApp(b)}
-                      className="rounded-lg bg-whatsapp px-3 py-1.5 text-sm font-medium text-white"
-                    >
-                      WhatsApp
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => cancelBooking(b.id)}
-                      disabled={isLoading(`cancel:${b.id}`)}
-                      className="btn-secondary text-sm"
-                    >
-                      Cancelar
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
+            <BookingDayCard
+              key={b.id}
+              booking={b}
+              businessName={businessName}
+              whatsappTemplate={whatsappBookingTemplate}
+              onCancelled={handleBookingCancelled}
+              showContact
+            />
           ))}
         </div>
       )}
