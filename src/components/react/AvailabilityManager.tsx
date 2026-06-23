@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { DAYS_ORDER, DAY_LABELS } from '../../lib/schedule';
 import { useAsyncAction } from '../../hooks/useAsyncAction';
 import { toast } from '../../lib/toast';
+import { formatDateTimeChile } from '../../lib/datetime';
 
 type Block = {
   dayOfWeek: string;
@@ -299,8 +300,8 @@ export function AvailabilityManager() {
                 >
                   <div>
                     <p className="text-sm">
-                      {new Date(b.startAt).toLocaleString('es-CL')} —{' '}
-                      {new Date(b.endAt).toLocaleString('es-CL')}
+                      {formatDateTimeChile(new Date(b.startAt))} —{' '}
+                      {formatDateTimeChile(new Date(b.endAt))}
                     </p>
                     {b.reason && <p className="text-xs text-muted">{b.reason}</p>}
                   </div>

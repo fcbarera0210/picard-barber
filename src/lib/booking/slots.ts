@@ -1,9 +1,13 @@
 import {
   addMinutes,
-  formatTime,
+  addDaysToDateStr,
+  endOfDay,
+  formatTimeChile,
+  getChileTimeParts,
   getDayOfWeekFromDate,
   intervalsOverlap,
-  parseLocalDateTime,
+  parseChileDateTime,
+  formatDateKeyInChile,
 } from '../datetime';
 
 export type AvailabilityBlock = {
@@ -55,28 +59,34 @@ function isRangeBooked(
     .some((b) => intervalsOverlap(slotStart, slotEnd, b.startAt, b.endAt));
 }
 
-function alignToInterval(date: Date, intervalMin: number): Date {
-  const aligned = new Date(date);
-  const minutes = aligned.getMinutes();
+function alignToInterval(date: Date, intervalMin: number, dateStr: string): Date {
+  const { hours, minutes } = getChileTimeParts(date);
+  let h = hours;
+  let m = minutes;
+
   if (intervalMin >= 30) {
-    if (minutes !== 0 && minutes !== 30) {
-      if (minutes < 30) {
-        aligned.setMinutes(30, 0, 0);
+    if (m !== 0 && m !== 30) {
+      if (m < 30) {
+        m = 30;
       } else {
-        aligned.setHours(aligned.getHours() + 1);
-        aligned.setMinutes(0, 0, 0);
+        h += 1;
+        m = 0;
       }
     }
-  } else if (minutes % intervalMin !== 0) {
-    const next = Math.ceil(minutes / intervalMin) * intervalMin;
+  } else if (m % intervalMin !== 0) {
+    const next = Math.ceil(m / intervalMin) * intervalMin;
     if (next >= 60) {
-      aligned.setHours(aligned.getHours() + 1);
-      aligned.setMinutes(0, 0, 0);
+      h += 1;
+      m = 0;
     } else {
-      aligned.setMinutes(next, 0, 0);
+      m = next;
     }
   }
-  return aligned;
+
+  return parseChileDateTime(
+    dateStr,
+    `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`,
+  );
 }
 
 export function computeAvailableSlots(ctx: SlotContext): string[] {
@@ -89,41 +99,39 @@ export function computeAvailableSlots(ctx: SlotContext): string[] {
   if (dayBlocks.length === 0) return [];
 
   const minStart = new Date(now.getTime() + ctx.minAdvanceHours * 60 * 60 * 1000);
-  const maxDate = new Date(now);
-  maxDate.setHours(23, 59, 59, 999);
-  maxDate.setDate(maxDate.getDate() + ctx.maxAdvanceDays);
+  const todayKey = formatDateKeyInChile(now);
+  const maxDayKey = addDaysToDateStr(todayKey, ctx.maxAdvanceDays);
+  const maxInstant = endOfDay(maxDayKey);
 
-  const [year, month, day] = ctx.date.split('-').map(Number);
-  const selectedDay = new Date(year, month - 1, day, 12, 0, 0);
-  if (selectedDay > maxDate) return [];
+  if (startOfDayCheck(ctx.date) > maxInstant.getTime()) return [];
 
   const intervalMin = ctx.serviceDurationMin >= 30 ? 30 : 15;
   const slots: string[] = [];
 
   for (const block of dayBlocks) {
-    let cursor = parseLocalDateTime(ctx.date, block.startTime);
-    const blockEnd = parseLocalDateTime(ctx.date, block.endTime);
+    let cursor = parseChileDateTime(ctx.date, block.startTime);
+    const blockEnd = parseChileDateTime(ctx.date, block.endTime);
 
-    cursor = alignToInterval(cursor, intervalMin);
+    cursor = alignToInterval(cursor, intervalMin, ctx.date);
 
     while (cursor < blockEnd) {
       const slotEnd = addMinutes(cursor, ctx.serviceDurationMin);
       if (slotEnd > blockEnd) break;
 
       if (ctx.serviceDurationMin >= 30) {
-        const m = cursor.getMinutes();
-        if (m !== 0 && m !== 30) {
+        const { minutes } = getChileTimeParts(cursor);
+        if (minutes !== 0 && minutes !== 30) {
           cursor = addMinutes(cursor, intervalMin);
           continue;
         }
       }
 
-      if (cursor >= minStart && cursor <= maxDate) {
+      if (cursor >= minStart && cursor <= maxInstant) {
         if (
           !isRangeBlockedByBookingBlock(cursor, slotEnd, ctx.bookingBlocks) &&
           !isRangeBooked(cursor, slotEnd, ctx.existingBookings)
         ) {
-          const time = formatTime(cursor);
+          const time = formatTimeChile(cursor);
           if (!slots.includes(time)) {
             slots.push(time);
           }
@@ -135,6 +143,10 @@ export function computeAvailableSlots(ctx: SlotContext): string[] {
   }
 
   return slots.sort();
+}
+
+function startOfDayCheck(dateStr: string): number {
+  return parseChileDateTime(dateStr, '00:00').getTime();
 }
 
 export function isSlotAvailable(

@@ -4,6 +4,7 @@ import { requireAdmin } from '../../lib/admin-auth';
 import { getActiveBusiness } from '../../lib/business';
 import { db } from '../../lib/db';
 import { bookingBlocks } from '../../lib/db/schema';
+import { parseChileDateTimeLocal } from '../../lib/datetime';
 
 export const prerender = false;
 
@@ -48,8 +49,8 @@ export const POST: APIRoute = async (context) => {
     return new Response(JSON.stringify({ error: 'startAt y endAt requeridos' }), { status: 400 });
   }
 
-  const startAt = new Date(body.startAt);
-  const endAt = new Date(body.endAt);
+  const startAt = parseChileDateTimeLocal(body.startAt);
+  const endAt = parseChileDateTimeLocal(body.endAt);
 
   if (endAt <= startAt) {
     return new Response(JSON.stringify({ error: 'endAt debe ser posterior a startAt' }), {

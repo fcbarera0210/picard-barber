@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { formatDateTimeChile } from '../../lib/datetime';
+import { formatDateTimeChile, formatTimeChile, TIMEZONE } from '../../lib/datetime';
 import type { CalendarViewMode } from '../../lib/calendar-utils';
 import {
   addDays,
@@ -14,6 +14,7 @@ import {
 } from '../../lib/calendar-utils';
 import { useIsMobile } from '../../hooks/useMediaQuery';
 import { useBookingBusiness } from '../../hooks/useBookingBusiness';
+import { toast } from '../../lib/toast';
 import { BookingDayCard } from './BookingDayCard';
 import { DayDetailSheet } from './DayDetailSheet';
 
@@ -74,6 +75,7 @@ export function ReservationsCalendar({
     } catch (err) {
       if (err instanceof DOMException && err.name === 'AbortError') return;
       setBookings([]);
+      toast.error('No se pudieron cargar las reservas');
     } finally {
       setLoading(false);
     }
@@ -148,7 +150,7 @@ export function ReservationsCalendar({
       className="calendar-booking-chip block truncate"
       title={`${booking.clientName} — ${booking.serviceName}`}
     >
-      {new Date(booking.startAt).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}{' '}
+      {formatTimeChile(new Date(booking.startAt))}{' '}
       {booking.clientName}
     </span>
   );
@@ -313,7 +315,7 @@ export function ReservationsCalendar({
         {dayBookings.map((booking) => (
           <div key={booking.id} className="calendar-day-item flex items-center gap-4 p-3">
             <div className="min-w-[56px] rounded px-2 py-1.5 text-center font-mono text-xs font-bold text-bg bg-accent">
-              {new Date(booking.startAt).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}
+              {formatTimeChile(new Date(booking.startAt))}
             </div>
             <div className="min-w-0 flex-1">
               <p className="truncate font-medium">{booking.clientName}</p>
@@ -421,13 +423,14 @@ export function ReservationsCalendar({
         role="dialog"
         aria-modal="true"
       >
-        <div className="card w-full max-w-md space-y-4" onClick={(e) => e.stopPropagation()}>
+        <div className="card w-full max-w-lg space-y-4" onClick={(e) => e.stopPropagation()}>
           <div className="flex items-start justify-between gap-3">
             <h3 className="font-heading font-bold capitalize">
               {selectedDate.toLocaleDateString('es-CL', {
                 weekday: 'long',
                 day: 'numeric',
                 month: 'long',
+                timeZone: TIMEZONE,
               })}
             </h3>
             <button

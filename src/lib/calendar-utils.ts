@@ -1,10 +1,9 @@
+import { formatDateKeyInChile, endOfDay, startOfDay } from './datetime';
+
 export type CalendarViewMode = 'day' | 'week' | 'month';
 
 export function formatDateKey(date: Date): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
+  return formatDateKeyInChile(date);
 }
 
 export function isSameDay(a: Date, b: Date): boolean {
@@ -89,6 +88,7 @@ export function getPeriodLabel(date: Date, viewMode: CalendarViewMode): string {
       day: 'numeric',
       month: 'long',
       year: 'numeric',
+      timeZone: 'America/Santiago',
     });
   }
 
@@ -107,23 +107,24 @@ export function getPeriodLabel(date: Date, viewMode: CalendarViewMode): string {
 
 export function getFetchRange(currentDate: Date, viewMode: CalendarViewMode): { from: Date; to: Date } {
   if (viewMode === 'day') {
-    const from = new Date(currentDate);
-    from.setHours(0, 0, 0, 0);
-    const to = new Date(currentDate);
-    to.setHours(23, 59, 59, 999);
-    return { from, to };
+    const dateKey = formatDateKey(currentDate);
+    return { from: startOfDay(dateKey), to: endOfDay(dateKey) };
   }
 
   if (viewMode === 'week') {
-    return { from: startOfWeek(currentDate), to: endOfWeek(currentDate) };
+    const start = startOfWeek(currentDate);
+    const end = endOfWeek(currentDate);
+    return {
+      from: startOfDay(formatDateKey(start)),
+      to: endOfDay(formatDateKey(end)),
+    };
   }
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
   const days = getMonthGridDays(year, month);
-  const from = new Date(days[0]);
-  from.setHours(0, 0, 0, 0);
-  const to = new Date(days[days.length - 1]);
-  to.setHours(23, 59, 59, 999);
-  return { from, to };
+  return {
+    from: startOfDay(formatDateKey(days[0])),
+    to: endOfDay(formatDateKey(days[days.length - 1])),
+  };
 }

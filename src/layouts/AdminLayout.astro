@@ -6,6 +6,7 @@ import { AdminSignOut } from '../components/react/AdminSignOut';
 import { ParallaxBackground } from '../components/react/ParallaxBackground';
 import { TechnoSynth } from '../components/react/TechnoSynth';
 import { ToastHost } from '../components/react/ToastHost';
+import { ConfirmHost } from '../components/react/ConfirmHost';
 
 const pathname = Astro.url.pathname;
 
@@ -69,5 +70,6 @@ function navClass(href: string) {
       <slot />
     </main>
     <ToastHost client:load />
+    <ConfirmHost client:load />
   </body>
 </html>

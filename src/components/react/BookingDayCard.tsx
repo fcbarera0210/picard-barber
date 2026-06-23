@@ -1,7 +1,8 @@
-import { formatDateTimeChile } from '../../lib/datetime';
+import { formatDateTimeChile, formatTimeChile } from '../../lib/datetime';
 import { buildBookingWhatsAppMessage, openWhatsAppUrl } from '../../lib/whatsapp';
 import { useAsyncAction } from '../../hooks/useAsyncAction';
 import { toast } from '../../lib/toast';
+import { confirm } from '../../lib/confirm';
 
 export type BookingCardData = {
   id: string;
@@ -33,13 +34,19 @@ export function BookingDayCard({
 }: BookingDayCardProps) {
   const { run, isLoading } = useAsyncAction();
   const isConfirmed = booking.status === 'confirmed';
-  const timeLabel = new Date(booking.startAt).toLocaleTimeString('es-CL', {
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  const timeLabel = formatTimeChile(new Date(booking.startAt));
+  const cancelling = isLoading(`cancel:${booking.id}`);
 
   async function cancelBooking() {
-    if (!confirm('¿Cancelar esta cita?')) return;
+    const ok = await confirm({
+      title: 'Cancelar cita',
+      message: '¿Cancelar esta cita?',
+      confirmLabel: 'Sí, cancelar',
+      cancelLabel: 'No',
+      variant: 'danger',
+    });
+    if (!ok) return;
+
     await run(`cancel:${booking.id}`, async () => {
       const res = await fetch('/api/bookings', {
         method: 'PATCH',
@@ -68,10 +75,51 @@ export function BookingDayCard({
     openWhatsAppUrl(booking.clientPhone, message);
   }
 
+  if (compact) {
+    return (
+      <div className={`calendar-day-item flex flex-col gap-3 p-3`}>
+        <div className="flex min-w-0 items-start gap-3">
+          <div className="min-h-11 min-w-[56px] shrink-0 rounded px-2 py-2 text-center font-mono text-xs font-bold text-bg bg-accent">
+            {timeLabel}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="font-semibold">{booking.clientName}</p>
+            <p className="text-sm text-muted">{booking.serviceName}</p>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <span className={isConfirmed ? 'status-confirmed text-sm' : 'status-cancelled text-sm'}>
+            {isConfirmed ? 'Confirmada' : 'Cancelada'}
+          </span>
+          {isConfirmed && (
+            <>
+              {booking.clientPhone && (
+                <button
+                  type="button"
+                  onClick={handleWhatsApp}
+                  className="min-h-11 rounded-lg bg-whatsapp px-4 py-2 text-sm font-medium text-white"
+                >
+                  WhatsApp
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={cancelBooking}
+                disabled={cancelling}
+                className="btn-secondary min-h-11 text-sm"
+              >
+                {cancelling ? 'Cancelando...' : 'Cancelar'}
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div
-      className={`calendar-day-item flex flex-col gap-3 ${compact ? 'p-3' : 'p-4'} sm:flex-row sm:items-center sm:justify-between`}
-    >
+    <div className="calendar-day-item flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex min-w-0 items-start gap-3 sm:items-center sm:gap-4">
         <div className="min-h-11 min-w-[56px] shrink-0 rounded px-2 py-2 text-center font-mono text-xs font-bold text-bg bg-accent sm:py-1.5">
           {timeLabel}
@@ -79,9 +127,7 @@ export function BookingDayCard({
         <div className="min-w-0 flex-1">
           <p className="font-semibold">{booking.clientName}</p>
           <p className="text-sm text-muted">{booking.serviceName}</p>
-          {!compact && (
-            <p className="text-sm text-muted">{formatDateTimeChile(new Date(booking.startAt))}</p>
-          )}
+          <p className="text-sm text-muted">{formatDateTimeChile(new Date(booking.startAt))}</p>
           {showContact && (booking.clientEmail || booking.clientPhone) && (
             <p className="text-xs text-muted">
               {[booking.clientEmail, booking.clientPhone].filter(Boolean).join(' · ')}
@@ -108,10 +154,10 @@ export function BookingDayCard({
             <button
               type="button"
               onClick={cancelBooking}
-              disabled={isLoading(`cancel:${booking.id}`)}
+              disabled={cancelling}
               className="btn-secondary min-h-11 text-sm"
             >
-              Cancelar
+              {cancelling ? 'Cancelando...' : 'Cancelar'}
             </button>
           </>
         )}

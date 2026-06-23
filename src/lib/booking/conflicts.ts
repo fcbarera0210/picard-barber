@@ -9,7 +9,7 @@ import {
   services,
 } from '../db/schema';
 import { getActiveBusiness } from '../business';
-import { endOfDay, getDateRange, parseLocalDateTime, startOfDay } from '../datetime';
+import { endOfDay, getDateRange, parseChileDateTime, startOfDay } from '../datetime';
 import { isValidChilePhone, isValidEmail, normalizeEmail, normalizePhone } from '../phone';
 import { computeAvailableSlots, isSlotAvailable, type SlotContext } from './slots';
 
@@ -197,7 +197,7 @@ export async function createBooking(input: CreateBookingInput): Promise<CreateBo
     };
   }
 
-  const startAt = parseLocalDateTime(input.date, input.time);
+  const startAt = parseChileDateTime(input.date, input.time);
   const endAt = new Date(startAt.getTime() + ctx.serviceDurationMin * 60_000);
 
   const conflict = ctx.existingBookings

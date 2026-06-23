@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import { addDaysToDateStr, endOfDay, startOfDay } from '../../lib/datetime';
+import { toast } from '../../lib/toast';
 import { useIsMobile } from '../../hooks/useMediaQuery';
 import { useBookingBusiness } from '../../hooks/useBookingBusiness';
 import { BookingDayCard } from './BookingDayCard';
@@ -36,22 +38,28 @@ export function AgendaView() {
 
   async function load() {
     setLoading(true);
-    const listView = isMobile ? 'day' : view;
-    if (listView === 'day') {
-      const res = await fetch(`/api/bookings?date=${date}`);
-      const data = await res.json();
-      setBookings(data.bookings ?? []);
-    } else {
-      const start = new Date(date + 'T00:00:00');
-      const end = new Date(start);
-      end.setDate(end.getDate() + 6);
-      const res = await fetch(
-        `/api/bookings?from=${start.toISOString()}&to=${end.toISOString()}`,
-      );
-      const data = await res.json();
-      setBookings(data.bookings ?? []);
+    try {
+      const listView = isMobile ? 'day' : view;
+      if (listView === 'day') {
+        const res = await fetch(`/api/bookings?date=${date}`);
+        if (!res.ok) throw new Error('fetch failed');
+        const data = await res.json();
+        setBookings(data.bookings ?? []);
+      } else {
+        const endKey = addDaysToDateStr(date, 6);
+        const res = await fetch(
+          `/api/bookings?from=${startOfDay(date).toISOString()}&to=${endOfDay(endKey).toISOString()}`,
+        );
+        if (!res.ok) throw new Error('fetch failed');
+        const data = await res.json();
+        setBookings(data.bookings ?? []);
+      }
+    } catch {
+      setBookings([]);
+      toast.error('No se pudo cargar la agenda');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }
 
   useEffect(() => {
