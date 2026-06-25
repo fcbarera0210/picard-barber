@@ -57,7 +57,6 @@ export function ReservationsCalendar({
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedBookings, setSelectedBookings] = useState<CalendarBooking[]>([]);
   const [reloadKey, setReloadKey] = useState(0);
-  const [mobileInitialized, setMobileInitialized] = useState(false);
 
   const resolvedShowAgendaLink = showAgendaLink ?? true;
 
@@ -86,21 +85,6 @@ export function ReservationsCalendar({
     loadBookings(controller.signal);
     return () => controller.abort();
   }, [loadBookings, reloadKey]);
-
-  useEffect(() => {
-    if (!isMobile) return;
-    if (viewMode === 'week') {
-      setViewMode('day');
-    }
-  }, [isMobile, viewMode]);
-
-  useEffect(() => {
-    if (!isMobile || mobileInitialized) return;
-    if (defaultView === 'month' || defaultView === 'week') {
-      setViewMode('day');
-    }
-    setMobileInitialized(true);
-  }, [isMobile, defaultView, mobileInitialized]);
 
   useEffect(() => {
     if (!selectedDate) return;
@@ -247,6 +231,54 @@ export function ReservationsCalendar({
     );
   };
 
+  const renderWeekViewMobile = () => {
+    const weekDays = getWeekDays(currentDate);
+
+    return (
+      <div className="space-y-2 md:hidden">
+        {weekDays.map((date) => {
+          const dayBookings = getBookingsForDate(date);
+          const dayIndex = date.getDay() === 0 ? 6 : date.getDay() - 1;
+          const isTodayDate = isToday(date);
+          const count = dayBookings.length;
+
+          return (
+            <button
+              key={formatDateKey(date)}
+              type="button"
+              onClick={() => handleDateClick(date)}
+              className={`calendar-week-day-mobile w-full text-left ${isTodayDate ? 'calendar-week-day-mobile-today' : ''}`}
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="font-mono text-[10px] uppercase tracking-wider text-muted">
+                    {DAY_NAMES_WEEK[dayIndex]}
+                  </p>
+                  <p className={`text-sm font-semibold ${isTodayDate ? 'text-accent' : ''}`}>
+                    {date.toLocaleDateString('es-CL', { day: 'numeric', month: 'short' })}
+                  </p>
+                </div>
+                {count === 0 ? (
+                  <span className="text-xs text-muted">Sin citas</span>
+                ) : (
+                  <span className="calendar-day-count">{count}</span>
+                )}
+              </div>
+              {count > 0 && (
+                <div className="mt-2 flex flex-col gap-1">
+                  {dayBookings.slice(0, 2).map((b) => renderBookingChip(b))}
+                  {count > 2 && (
+                    <span className="text-[10px] text-muted">+{count - 2} más</span>
+                  )}
+                </div>
+              )}
+            </button>
+          );
+        })}
+      </div>
+    );
+  };
+
   const renderWeekView = () => {
     const weekDays = getWeekDays(currentDate);
     const maxVisible = compact ? 3 : 5;
@@ -328,7 +360,10 @@ export function ReservationsCalendar({
     );
   };
 
-  const viewModes: CalendarViewMode[] = isMobile ? ['day', 'month'] : ['day', 'week', 'month'];
+  const viewModeLabel = (mode: CalendarViewMode) =>
+    mode === 'day' ? 'Día' : mode === 'week' ? 'Semana' : 'Mes';
+
+  const viewModes: CalendarViewMode[] = ['day', 'week', 'month'];
 
   const renderToolbar = () => (
     <>
@@ -373,7 +408,7 @@ export function ReservationsCalendar({
                 onClick={() => setViewMode(mode)}
                 className={viewMode === mode ? 'admin-chip admin-chip-active' : 'admin-chip admin-chip-inactive'}
               >
-                {mode === 'day' ? 'Día' : 'Mes'}
+                {viewModeLabel(mode)}
               </button>
             ))}
           </div>
@@ -395,7 +430,7 @@ export function ReservationsCalendar({
                 onClick={() => setViewMode(mode)}
                 className={viewMode === mode ? 'admin-chip admin-chip-active' : 'admin-chip admin-chip-inactive'}
               >
-                {mode === 'day' ? 'Día' : mode === 'week' ? 'Semana' : 'Mes'}
+                {viewModeLabel(mode)}
               </button>
             ))}
           </div>
@@ -494,7 +529,12 @@ export function ReservationsCalendar({
               {renderMonthViewDesktop()}
             </>
           )}
-          {viewMode === 'week' && renderWeekView()}
+          {viewMode === 'week' && (
+            <>
+              {renderWeekViewMobile()}
+              {renderWeekView()}
+            </>
+          )}
           {viewMode === 'day' && renderDayView()}
         </>
       )}

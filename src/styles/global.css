@@ -719,9 +719,26 @@ h3,
 
 .calendar-view-toggle-mobile {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, 1fr);
   gap: 0.25rem;
   width: 100%;
+}
+
+.calendar-week-day-mobile {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0.25rem;
+  background-color: color-mix(in srgb, var(--color-surface-light) 80%, transparent);
+  padding: 0.75rem;
+  transition: border-color 0.2s;
+}
+
+.calendar-week-day-mobile:hover {
+  border-color: rgba(0, 255, 85, 0.3);
+}
+
+.calendar-week-day-mobile-today {
+  border-color: rgba(0, 255, 85, 0.45);
+  box-shadow: 0 0 12px rgba(0, 255, 85, 0.08);
 }
 
 .calendar-view-toggle-mobile .admin-chip {

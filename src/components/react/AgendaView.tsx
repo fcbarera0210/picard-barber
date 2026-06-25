@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { addDaysToDateStr, endOfDay, startOfDay } from '../../lib/datetime';
 import { toast } from '../../lib/toast';
-import { useIsMobile } from '../../hooks/useMediaQuery';
 import { useBookingBusiness } from '../../hooks/useBookingBusiness';
 import { BookingDayCard } from './BookingDayCard';
 import { ReservationsCalendar } from './ReservationsCalendar';
@@ -27,7 +26,6 @@ function toDateInput(d: Date): string {
 type ViewMode = 'list' | 'calendar';
 
 export function AgendaView() {
-  const isMobile = useIsMobile();
   const { businessName, whatsappBookingTemplate } = useBookingBusiness();
   const [viewMode, setViewMode] = useState<ViewMode>('calendar');
   const [view, setView] = useState<'day' | 'week'>('day');
@@ -39,8 +37,7 @@ export function AgendaView() {
   async function load() {
     setLoading(true);
     try {
-      const listView = isMobile ? 'day' : view;
-      if (listView === 'day') {
+      if (view === 'day') {
         const res = await fetch(`/api/bookings?date=${date}`);
         if (!res.ok) throw new Error('fetch failed');
         const data = await res.json();
@@ -66,13 +63,7 @@ export function AgendaView() {
     if (viewMode === 'list') {
       load();
     }
-  }, [date, view, viewMode, isMobile, reloadKey]);
-
-  useEffect(() => {
-    if (isMobile && view === 'week') {
-      setView('day');
-    }
-  }, [isMobile, view]);
+  }, [date, view, viewMode, reloadKey]);
 
   function handleBookingCancelled() {
     setReloadKey((k) => k + 1);
@@ -100,7 +91,7 @@ export function AgendaView() {
 
         {viewMode === 'list' && (
           <>
-            <div className={`flex gap-1 ${isMobile ? 'hidden' : ''}`}>
+            <div className="flex gap-1">
               <button
                 type="button"
                 onClick={() => setView('day')}
