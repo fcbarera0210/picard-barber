@@ -4,11 +4,12 @@ import Hero from '../components/astro/Hero.astro';
 import ServicesGrid from '../components/astro/ServicesGrid.astro';
 import VisitSection from '../components/astro/VisitSection.astro';
 import CTABanner from '../components/astro/CTABanner.astro';
+import { GallerySection } from '../components/react/GallerySection';
 import { ScrollReveal } from '../components/react/ScrollReveal';
 import { getActiveBusiness } from '../lib/business';
 import { DAYS_ORDER, DAY_LABELS } from '../lib/schedule';
 import { db } from '../lib/db';
-import { services, availabilityBlocks } from '../lib/db/schema';
+import { services, availabilityBlocks, galleryPhotos } from '../lib/db/schema';
 import { eq, asc } from 'drizzle-orm';
 
 export const prerender = false;
@@ -37,6 +38,17 @@ const scheduleByDay = DAYS_ORDER.map((day) => ({
     .filter((a) => a.dayOfWeek === day && a.active)
     .map((a) => `${a.startTime} – ${a.endTime}`),
 })).filter((s) => s.ranges.length > 0);
+
+const gallery = biz
+  ? await db
+      .select({
+        id: galleryPhotos.id,
+        url: galleryPhotos.url,
+      })
+      .from(galleryPhotos)
+      .where(eq(galleryPhotos.businessId, biz.id))
+      .orderBy(asc(galleryPhotos.sortOrder), asc(galleryPhotos.createdAt))
+  : [];
 ---
 
 <BaseLayout>
@@ -52,6 +64,8 @@ const scheduleByDay = DAYS_ORDER.map((day) => ({
     address={biz?.address}
     mapsUrl={biz?.mapsUrl}
   />
+
+  {gallery.length > 0 && <GallerySection photos={gallery} client:load />}
 
   <ScrollReveal client:load>
     <CTABanner />

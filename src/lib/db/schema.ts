@@ -119,6 +119,16 @@ export const bookings = pgTable(
   ],
 );
 
+export const galleryPhotos = pgTable('gallery_photos', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  businessId: uuid('business_id')
+    .notNull()
+    .references(() => business.id, { onDelete: 'cascade' }),
+  url: text('url').notNull(),
+  sortOrder: integer('sort_order').notNull().default(0),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const adminUsers = pgTable('admin_users', {
   id: uuid('id').primaryKey().defaultRandom(),
   username: text('username').notNull().unique(),
@@ -131,6 +141,7 @@ export const businessRelations = relations(business, ({ many }) => ({
   availabilityBlocks: many(availabilityBlocks),
   bookingBlocks: many(bookingBlocks),
   bookings: many(bookings),
+  galleryPhotos: many(galleryPhotos),
 }));
 
 export const servicesRelations = relations(services, ({ one, many }) => ({
@@ -146,4 +157,8 @@ export const bookingsRelations = relations(bookings, ({ one }) => ({
   business: one(business, { fields: [bookings.businessId], references: [business.id] }),
   client: one(clients, { fields: [bookings.clientId], references: [clients.id] }),
   service: one(services, { fields: [bookings.serviceId], references: [services.id] }),
+}));
+
+export const galleryPhotosRelations = relations(galleryPhotos, ({ one }) => ({
+  business: one(business, { fields: [galleryPhotos.businessId], references: [business.id] }),
 }));

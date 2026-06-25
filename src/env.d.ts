@@ -6,6 +6,9 @@ interface ImportMetaEnv {
   readonly PUBLIC_BUSINESS_SLUG?: string;
   readonly ADMIN_SEED_USERNAME?: string;
   readonly ADMIN_SEED_PASSWORD?: string;
+  readonly BLOB_READ_WRITE_TOKEN?: string;
+  readonly BLOB_STORE_ID?: string;
+  readonly BLOB_WEBHOOK_PUBLIC_KEY?: string;
 }
 
 interface ImportMeta {

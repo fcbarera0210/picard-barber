@@ -7,6 +7,7 @@ const links = [
   { href: '/admin/servicios', label: 'Servicios' },
   { href: '/admin/disponibilidad', label: 'Disponibilidad' },
   { href: '/admin/clientes', label: 'Clientes' },
+  { href: '/admin/galeria', label: 'Galería' },
   { href: '/admin/configuracion', label: 'Config' },
   { href: '/', label: 'Sitio público', muted: true },
 ];
